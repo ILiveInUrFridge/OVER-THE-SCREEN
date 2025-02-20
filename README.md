@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="https://github.com/ILiveInUrFridge/OVER-THE-SCREEN/blob/main/LOGO.png" alt="Game Logo">
+</div>
+
 ## About This Repository
 This repository contains the **source code** for my game **OVER THE SCREEN!**, released under **The Unlicense**. It is meant to help other developers by providing a reference or starting point.
 
