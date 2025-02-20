@@ -3,11 +3,14 @@ This repository contains the **source code** for my game **OVER THE SCREEN!**, r
 
 ## How You Can Use It
 ✅ You can **use, modify, and distribute** this code for any purpose.
+
 ✅ No need to give credit (but it's appreciated!).
+
 ✅ You can even use this in commercial projects.
 
 ## What You Cannot Use
 ❌ The **game's assets (art, music, UI, story, etc.)** are **NOT open-source**.
+
 ❌ You **cannot** use the original game’s assets without permission.
 
 ## Disclaimer
