@@ -68,7 +68,7 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
     }
     
     /// <summary>
-    /// Switch to the selected monitor
+    ///     Switch to the selected monitor
     /// </summary>
     private void SwitchToMonitor(int index)
     {
@@ -162,10 +162,20 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
             resolutionDropdownComponent.UpdateToMatchCurrentResolution();
         }
         
-        this.Log($"Monitor switch to {monitorIndex+1} complete");
+        this.Log($"Monitor switch to {monitorIndex + 1} complete");
     }
 
-    // New method to find the best resolution for a display
+    /// <summary>
+    ///     Find the best resolution for a display
+    /// </summary>
+    /// 
+    /// <param name="display">
+    ///     The display to find the best resolution for
+    /// </param>
+    /// 
+    /// <returns>
+    ///     The best resolution for the display
+    /// </returns>
     private Resolution FindBestResolutionForDisplay(DisplayInfo display)
     {
         // Start with the display's native resolution
