@@ -12,7 +12,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     // List of display modes to offer in the dropdown
     private readonly FullScreenMode[] displayModes = new FullScreenMode[]
     {
-        FullScreenMode.ExclusiveFullScreen,    // Standard fullscreen
+        // FullScreenMode.ExclusiveFullScreen,    // Standard fullscreen
         FullScreenMode.FullScreenWindow,       // Borderless fullscreen
         FullScreenMode.Windowed                // Windowed mode
     };
@@ -20,8 +20,8 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     // Human-readable names for each display mode
     private readonly string[] displayModeNames = new string[]
     {
-        "Fullscreen",
-        "Borderless",
+        // "Fullscreen", full screen mode is basically unncessary. Borderless is better. Who actually prefers fullscreen?
+        "Fullscreen", // this is actually borderless fullscreen
         "Windowed"
     };
     
@@ -114,7 +114,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     }
     
     /// <summary>
-    /// Updates the resolution dropdown after the display mode has changed
+    ///     Updates the resolution dropdown after the display mode has changed
     /// </summary>
     private IEnumerator UpdateResolutionDropdownAfterDisplayModeChange()
     {

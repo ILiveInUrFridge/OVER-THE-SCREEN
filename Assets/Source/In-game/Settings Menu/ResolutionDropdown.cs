@@ -24,7 +24,7 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
         
         foreach (Resolution res in allResolutions)
         {
-            float aspect = (float)res.width / (float)res.height;
+            float aspect = (float) res.width / (float) res.height;
             
             // Filter to approximately 16:9 aspect ratio
             if (Mathf.Abs(aspect - (16f / 9f)) < 0.01f)
@@ -61,15 +61,15 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
         int currentIndex = 0;
         
         // Get current resolution
-        int currentWidth = Screen.width;
+        int currentWidth  = Screen.width;
         int currentHeight = Screen.height;
-        bool foundMatch = false;
+        bool foundMatch   = false;
         
         // Create options for each resolution
         for (int i = 0; i < availableResolutions.Count; i++)
         {
             Resolution res = availableResolutions[i];
-            string option = $"{res.width} x {res.height}";
+            string option  = $"{res.width} x {res.height}";
             options.Add(option);
             
             // Check if this matches current resolution
