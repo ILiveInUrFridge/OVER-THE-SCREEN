@@ -131,9 +131,27 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         // Wait for move to complete
         yield return new WaitForEndOfFrame();
         
-        // Restore original mode and resolution
-        this.Log($"Restoring mode: {originalMode} and resolution: {originalWidth}x{originalHeight}");
-        Screen.SetResolution(originalWidth, originalHeight, originalMode, originalRefreshRate);
+        // For fullscreen modes when moving to a higher resolution monitor,
+        // automatically adjust to the new monitor's native resolution
+        if (originalMode != FullScreenMode.Windowed && 
+            (targetDisplay.width > originalWidth || targetDisplay.height > originalHeight))
+        {
+            this.Log($"Switching to higher resolution display in fullscreen mode - adjusting to native resolution: {targetDisplay.width}x{targetDisplay.height}");
+            
+            // Use the target display's native resolution
+            Screen.SetResolution(
+                targetDisplay.width, 
+                targetDisplay.height, 
+                originalMode, 
+                originalRefreshRate
+            );
+        }
+        else
+        {
+            // Otherwise, restore original mode and resolution
+            this.Log($"Restoring mode: {originalMode} and resolution: {originalWidth}x{originalHeight}");
+            Screen.SetResolution(originalWidth, originalHeight, originalMode, originalRefreshRate);
+        }
         
         // Let the system catch up
         yield return new WaitForSeconds(0.2f);
