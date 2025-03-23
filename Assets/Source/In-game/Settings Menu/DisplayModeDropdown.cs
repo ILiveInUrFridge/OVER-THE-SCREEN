@@ -2,10 +2,12 @@ using UnityEngine;
 using TMPro;
 using System;
 using System.Collections.Generic;
+using System.Collections;
 
 public class DisplayModeDropdown : MonoBehaviour, ILoggable
 {
     [SerializeField] private TMP_Dropdown displayModeDropdown;
+    [SerializeField] private ResolutionDropdown resolutionDropdownComponent;
     
     // List of display modes to offer in the dropdown
     private readonly FullScreenMode[] displayModes = new FullScreenMode[]
@@ -19,7 +21,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     private readonly string[] displayModeNames = new string[]
     {
         "Fullscreen",
-        "Fullscreen Windowed",
+        "Borderless",
         "Windowed"
     };
     
@@ -96,6 +98,9 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
                 );
                 
                 this.Log($"Display mode changed to {displayModeNames[index]}");
+                
+                // Wait a frame for the mode change to take effect
+                StartCoroutine(UpdateResolutionDropdownAfterDisplayModeChange());
             }
             catch (Exception e)
             {
@@ -105,6 +110,21 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
         else
         {
             this.LogError($"Invalid display mode index: {index}");
+        }
+    }
+    
+    /// <summary>
+    /// Updates the resolution dropdown after the display mode has changed
+    /// </summary>
+    private IEnumerator UpdateResolutionDropdownAfterDisplayModeChange()
+    {
+        // Wait for the display mode change to take effect
+        yield return new WaitForSeconds(0.2f);
+        
+        // Update the resolution dropdown
+        if (resolutionDropdownComponent != null)
+        {
+            resolutionDropdownComponent.UpdateToMatchCurrentResolution();
         }
     }
 }
