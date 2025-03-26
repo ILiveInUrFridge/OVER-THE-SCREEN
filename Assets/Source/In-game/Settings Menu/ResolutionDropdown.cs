@@ -2,6 +2,12 @@ using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
 
+/// <summary>
+///     This is a dropdown that allows the player to switch between resolutions.
+///     
+///     Only first five resolutions are shown, and resolutions dynamically change
+///     based on the current display monitor.
+/// </summary>
 public class ResolutionDropdown : MonoBehaviour, ILoggable
 {
     [SerializeField] private TMP_Dropdown resolutionDropdown;
@@ -69,7 +75,7 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
         for (int i = 0; i < availableResolutions.Count; i++)
         {
             Resolution res = availableResolutions[i];
-            string option  = $"{res.width} x {res.height}";
+            string option  = $"{res.width} x {res.height} (16:9)";
             options.Add(option);
             
             // Check if this matches current resolution

@@ -4,6 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections;
 
+/// <summary>
+///     This is a dropdown that allows the player to switch between display modes.
+///     
+///     I'm not sure whether to enable exclusive fullscreen or not because the game itself
+///     is generally 2D without any heavy graphics work going on, so I doubt fullscreen will ever be necessary.
+///     However... if some people do want it - say, experiencing performance issues - I might enable it in the future.
+/// </summary>
 public class DisplayModeDropdown : MonoBehaviour, ILoggable
 {
     [SerializeField] private TMP_Dropdown displayModeDropdown;
@@ -13,8 +20,8 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     private readonly FullScreenMode[] displayModes = new FullScreenMode[]
     {
         // FullScreenMode.ExclusiveFullScreen,    // Standard fullscreen
-        FullScreenMode.FullScreenWindow,       // Borderless fullscreen
-        FullScreenMode.Windowed                // Windowed mode
+        FullScreenMode.FullScreenWindow,          // Borderless fullscreen
+        FullScreenMode.Windowed                   // Windowed mode
     };
     
     // Human-readable names for each display mode
@@ -89,18 +96,49 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
             
             try
             {
-                // Keep the current resolution when changing display mode
-                Screen.SetResolution(
-                    Screen.currentResolution.width,
-                    Screen.currentResolution.height,
-                    newMode,
-                    Screen.currentResolution.refreshRateRatio
-                );
+                // First, get the currently selected monitor (from SwitchMonitorDropdown if available)
+                int targetMonitorIndex = 0; // Default to primary display
+                SwitchMonitorDropdown monitorDropdown = FindAnyObjectByType<SwitchMonitorDropdown>();
+                if (monitorDropdown != null)
+                {
+                    // Get the currently selected monitor index
+                    targetMonitorIndex = monitorDropdown.GetCurrentMonitorIndex();
+                }
                 
-                this.Log($"Display mode changed to {displayModeNames[index]}");
+                // Get display layout to ensure we're going fullscreen on the right monitor
+                List<DisplayInfo> displays = new List<DisplayInfo>();
+                Screen.GetDisplayLayout(displays);
                 
-                // Wait a frame for the mode change to take effect
-                StartCoroutine(UpdateResolutionDropdownAfterDisplayModeChange());
+                if (displays.Count > targetMonitorIndex)
+                {
+                    DisplayInfo targetDisplay = displays[targetMonitorIndex];
+                    
+                    // Always move the window to the target monitor first, regardless of the new mode
+                    Vector2Int centerPosition = new Vector2Int(
+                        targetDisplay.width / 2 - Screen.width / 2,
+                        targetDisplay.height / 2 - Screen.height / 2
+                    );
+                    
+                    // Move window to the target monitor
+                    Screen.MoveMainWindowTo(targetDisplay, centerPosition);
+                    
+                    // Wait briefly to ensure the move completes
+                    StartCoroutine(CompleteDisplayModeChange(newMode, targetDisplay, index, targetMonitorIndex));
+                }
+                else
+                {
+                    // Fallback if target monitor not found
+                    Screen.SetResolution(
+                        Screen.currentResolution.width,
+                        Screen.currentResolution.height,
+                        newMode,
+                        Screen.currentResolution.refreshRateRatio
+                    );
+                    this.Log($"Display mode changed to {displayModeNames[index]} (fallback)");
+                    
+                    // Wait a frame for the mode change to take effect
+                    StartCoroutine(UpdateResolutionDropdownAfterDisplayModeChange());
+                }
             }
             catch (Exception e)
             {
@@ -110,6 +148,116 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
         else
         {
             this.LogError($"Invalid display mode index: {index}");
+        }
+    }
+    
+    /// <summary>
+    ///     Completes the display mode change after ensuring the window is positioned correctly
+    /// </summary>
+    private IEnumerator CompleteDisplayModeChange(
+        FullScreenMode newMode, 
+        DisplayInfo targetDisplay, 
+        int displayModeIndex,
+        int monitorIndex)
+    {
+        // Wait briefly to ensure window move is complete
+        yield return new WaitForSeconds(0.1f);
+        
+        try
+        {
+            if (newMode != FullScreenMode.Windowed)
+            {
+                // More aggressive approach for fullscreen
+                // First force windowed mode to reset any fullscreen state
+                Screen.SetResolution(
+                    800, 600, // Small temporary resolution
+                    FullScreenMode.Windowed,
+                    Screen.currentResolution.refreshRateRatio
+                );
+            }
+            else
+            {
+                // For windowed mode, use a reasonable windowed resolution
+                int windowedWidth = Mathf.Min(1280, targetDisplay.width - 100);
+                int windowedHeight = Mathf.Min(720, targetDisplay.height - 100);
+                
+                Screen.SetResolution(
+                    windowedWidth,
+                    windowedHeight,
+                    FullScreenMode.Windowed,
+                    Screen.currentResolution.refreshRateRatio
+                );
+            }
+        }
+        catch (Exception e)
+        {
+            this.LogError($"Error in first step of display mode change: {e.Message}");
+        }
+        
+        // Wait after first resolution change
+        yield return new WaitForSeconds(0.1f);
+        
+        try
+        {
+            if (newMode != FullScreenMode.Windowed)
+            {
+                // Move the window again to ensure it's on the right monitor
+                Vector2Int centerPosition = new Vector2Int(
+                    targetDisplay.width / 2 - 400, // Half of 800
+                    targetDisplay.height / 2 - 300 // Half of 600
+                );
+                Screen.MoveMainWindowTo(targetDisplay, centerPosition);
+            }
+            else
+            {
+                // Ensure the window stays on the target monitor even in windowed mode
+                int windowedWidth = Mathf.Min(1280, targetDisplay.width - 100);
+                int windowedHeight = Mathf.Min(720, targetDisplay.height - 100);
+                
+                Vector2Int centerPosition = new Vector2Int(
+                    targetDisplay.width / 2 - windowedWidth / 2,
+                    targetDisplay.height / 2 - windowedHeight / 2
+                );
+                Screen.MoveMainWindowTo(targetDisplay, centerPosition);
+            }
+        }
+        catch (Exception e)
+        {
+            this.LogError($"Error positioning window: {e.Message}");
+        }
+        
+        // Wait after moving window
+        yield return new WaitForSeconds(0.1f);
+        
+        try
+        {
+            if (newMode != FullScreenMode.Windowed)
+            {
+                // Now go fullscreen on that monitor
+                Screen.SetResolution(
+                    targetDisplay.width,
+                    targetDisplay.height,
+                    newMode,
+                    Screen.currentResolution.refreshRateRatio
+                );
+                
+                this.Log($"Forced fullscreen on monitor {monitorIndex}, resolution {targetDisplay.width}x{targetDisplay.height}");
+            }
+            
+            this.Log($"Display mode changed to {displayModeNames[displayModeIndex]} on monitor {monitorIndex}");
+        }
+        catch (Exception e)
+        {
+            this.LogError($"Error in final step of display mode change: {e.Message}");
+        }
+        
+        // Wait for the display mode change to take effect
+        yield return new WaitForSeconds(0.2f);
+        
+        // Update the resolution dropdown
+        if (resolutionDropdownComponent != null)
+        {
+            resolutionDropdownComponent.UpdateToMatchCurrentResolution();
         }
     }
     
