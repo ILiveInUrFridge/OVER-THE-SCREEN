@@ -63,7 +63,7 @@ public class LanguageDropdown : MonoBehaviour, ILoggable
         
         // Check for saved language preference
         string savedLanguageCode = PlayerPrefs.GetString(PREFS_LANGUAGE_CODE, string.Empty);
-        bool hasSavedPreference = !string.IsNullOrEmpty(savedLanguageCode);
+        bool hasSavedPreference  = !string.IsNullOrEmpty(savedLanguageCode);
         
         // If we have a saved preference, try to use it
         if (hasSavedPreference)
