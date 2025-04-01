@@ -25,18 +25,18 @@ public class VolumeManager : MonoBehaviour
 
     [Header("Defaults (0-100)")]
     public float defaultMaster = 50f;
-    public float defaultMusic = 50f;
-    public float defaultSFX   = 50f;
-    public float defaultVoice = 50f;
+    public float defaultMusic  = 50f;
+    public float defaultSFX    = 50f;
+    public float defaultVoice  = 50f;
 
     [Header("AudioMixer (Optional)")]
     public AudioMixer audioMixer; 
     
     // PlayerPrefs keys for saving volume settings
     private const string PREFS_MASTER = "VolumeSettingsMaster";
-    private const string PREFS_MUSIC = "VolumeSettingsMusic";
-    private const string PREFS_SFX = "VolumeSettingsSFX";
-    private const string PREFS_VOICE = "VolumeSettingsVoice";
+    private const string PREFS_MUSIC  = "VolumeSettingsMusic";
+    private const string PREFS_SFX    = "VolumeSettingsSFX";
+    private const string PREFS_VOICE  = "VolumeSettingsVoice";
     
     // AudioMixer parameter names
     private const string MASTER_VOL_PARAM = "MasterVolume";
@@ -192,7 +192,7 @@ public class VolumeManager : MonoBehaviour
     ///     Static access to AudioMixer parameter names for other scripts
     /// </summary>
     public static string GetMasterVolumeParam() => MASTER_VOL_PARAM;
-    public static string GetMusicVolumeParam() => MUSIC_VOL_PARAM;
-    public static string GetSFXVolumeParam() => SFX_VOL_PARAM;
-    public static string GetVoiceVolumeParam() => VOICE_VOL_PARAM;
+    public static string GetMusicVolumeParam()  => MUSIC_VOL_PARAM;
+    public static string GetSFXVolumeParam()    => SFX_VOL_PARAM;
+    public static string GetVoiceVolumeParam()  => VOICE_VOL_PARAM;
 }
