@@ -16,6 +16,9 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     [SerializeField] private TMP_Dropdown displayModeDropdown;
     [SerializeField] private ResolutionDropdown resolutionDropdownComponent;
     
+    // PlayerPrefs key
+    private const string PREFS_DISPLAY_MODE = "DisplayMode";
+    
     // List of display modes to offer in the dropdown
     private readonly FullScreenMode[] displayModes = new FullScreenMode[]
     {
@@ -39,7 +42,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
             // Populate dropdown with display mode options
             PopulateDropdown();
             
-            // Set initial selection based on current display mode
+            // Set initial selection based on saved preference or current display mode
             SetInitialSelection();
         }
         catch (Exception e)
@@ -64,10 +67,20 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     }
     
     /// <summary>
-    ///     Sets the initial dropdown selection based on the current display mode
+    ///     Sets the initial dropdown selection based on saved preference or current display mode
     /// </summary>
     private void SetInitialSelection()
     {
+        // Try to load saved preference first
+        int savedIndex = PlayerPrefs.GetInt(PREFS_DISPLAY_MODE, -1);
+        if (savedIndex >= 0 && savedIndex < displayModes.Length)
+        {
+            displayModeDropdown.SetValueWithoutNotify(savedIndex);
+            this.Log($"Loaded saved display mode preference: {displayModeNames[savedIndex]}");
+            return;
+        }
+        
+        // Otherwise use current system setting
         FullScreenMode currentMode = Screen.fullScreenMode;
         
         // Find the index of the current mode in our array
@@ -91,6 +104,10 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     {
         if (index >= 0 && index < displayModes.Length)
         {
+            // Save the preference
+            PlayerPrefs.SetInt(PREFS_DISPLAY_MODE, index);
+            PlayerPrefs.Save();
+            
             FullScreenMode newMode = displayModes[index];
             this.Log($"Changing display mode to: {displayModeNames[index]} ({newMode})");
             

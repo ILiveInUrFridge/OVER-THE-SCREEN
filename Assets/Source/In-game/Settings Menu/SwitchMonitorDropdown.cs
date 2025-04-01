@@ -17,6 +17,9 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
     [SerializeField] private TMP_Dropdown monitorDropdown;
     [SerializeField] private ResolutionDropdown resolutionDropdownComponent;
     private List<DisplayInfo> displayLayout;
+    
+    // PlayerPrefs key
+    private const string PREFS_MONITOR_INDEX = "MonitorIndex";
 
     private void Start()
     {
@@ -70,7 +73,21 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         }
 
         monitorDropdown.AddOptions(optionStrings);
-        monitorDropdown.value = 0; // Always starts at display 0 in Unity
+        
+        // Try to load saved monitor index
+        int savedIndex = PlayerPrefs.GetInt(PREFS_MONITOR_INDEX, 0);
+        
+        // Validate saved index is in range
+        if (savedIndex >= 0 && savedIndex < displayLayout.Count)
+        {
+            monitorDropdown.value = savedIndex;
+            this.Log($"Using saved monitor index: {savedIndex}");
+        }
+        else
+        {
+            monitorDropdown.value = 0; // Default to first display
+        }
+        
         monitorDropdown.RefreshShownValue();
 
         // Simple direct handler
@@ -87,6 +104,10 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
             this.LogError($"Monitor index {index + 1} is out of range");
             return;
         }
+
+        // Save the preference
+        PlayerPrefs.SetInt(PREFS_MONITOR_INDEX, index);
+        PlayerPrefs.Save();
 
         DisplayInfo display = displayLayout[index];
         this.Log($"Attempting to switch to monitor {index + 1}: {display.name}");
