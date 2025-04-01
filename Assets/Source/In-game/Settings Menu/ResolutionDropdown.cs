@@ -13,6 +13,10 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
     [SerializeField] private TMP_Dropdown resolutionDropdown;
     private List<Resolution> availableResolutions = new List<Resolution>();
     
+    // PlayerPrefs keys
+    private const string PREFS_RESOLUTION_WIDTH = "ResolutionWidth";
+    private const string PREFS_RESOLUTION_HEIGHT = "ResolutionHeight";
+    
     void Start()
     {
         RefreshResolutions();
@@ -66,19 +70,23 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
         List<string> options = new List<string>();
         int currentIndex = 0;
         
-        // Get current resolution
-        int currentWidth  = Screen.width;
-        int currentHeight = Screen.height;
-        bool foundMatch   = false;
+        // Try to load saved resolution preference
+        int savedWidth = PlayerPrefs.GetInt(PREFS_RESOLUTION_WIDTH, -1);
+        int savedHeight = PlayerPrefs.GetInt(PREFS_RESOLUTION_HEIGHT, -1);
+        
+        // Get current resolution if no saved preference
+        int currentWidth = (savedWidth > 0) ? savedWidth : Screen.width;
+        int currentHeight = (savedHeight > 0) ? savedHeight : Screen.height;
+        bool foundMatch = false;
         
         // Create options for each resolution
         for (int i = 0; i < availableResolutions.Count; i++)
         {
             Resolution res = availableResolutions[i];
-            string option  = $"{res.width} x {res.height} (16:9)";
+            string option = $"{res.width} x {res.height} (16:9)";
             options.Add(option);
             
-            // Check if this matches current resolution
+            // Check if this matches current/saved resolution
             if (res.width == currentWidth && res.height == currentHeight)
             {
                 currentIndex = i;
@@ -113,6 +121,11 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
         {
             Resolution selected = availableResolutions[index];
             this.Log($"Changing resolution to: {selected.width}x{selected.height}");
+            
+            // Save the new resolution preference
+            PlayerPrefs.SetInt(PREFS_RESOLUTION_WIDTH, selected.width);
+            PlayerPrefs.SetInt(PREFS_RESOLUTION_HEIGHT, selected.height);
+            PlayerPrefs.Save();
             
             // Set the new resolution while maintaining current display mode
             Screen.SetResolution(
