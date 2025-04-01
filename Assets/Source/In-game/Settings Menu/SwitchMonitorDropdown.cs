@@ -8,6 +8,9 @@ using System.Collections;
 ///     This is a dropdown that allows the player to switch between monitors.   
 ///     
 ///     Honestly, this isn't fully functional. But it does get the job done for those who needs it.
+///     And looking at other titles like HoneyCome that implements the same feature, they also
+///     haven't implemented it properly either. I tried mimicking HoneyCome's implementation, and I mean...
+///     it works the same, so I guess that's good enough. Illusion moment.
 ///     
 ///     Also, I'm not exactly sure how the whole screen detection and logic should be working like, so
 ///     this is the best I could get out of it. GGs.
