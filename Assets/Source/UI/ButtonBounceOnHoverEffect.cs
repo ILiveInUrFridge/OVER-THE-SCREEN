@@ -14,6 +14,7 @@ public class ButtonBounceOnHoverEffect : MonoBehaviour, IPointerEnterHandler, IP
     public float bounceInDuration = 0.15f;
     [Tooltip("Time to revert back to original scale on mouse exit.")]
     public float bounceOutDuration = 0.1f;
+    public bool playSoundOnHover = true;
 
     [Header("Optional - Position Offset")]
     public Vector3 hoverOffset = new Vector3(-25f, 0f, 0f);
@@ -45,13 +46,13 @@ public class ButtonBounceOnHoverEffect : MonoBehaviour, IPointerEnterHandler, IP
     private System.Collections.IEnumerator BounceInRoutine()
     {
         // Phase 1: from current scale → overshoot scale
-        float   halfDuration    = bounceInDuration * 0.5f;
+        float halfDuration = bounceInDuration * 0.5f;
         Vector3 overshootVector = originalScale * overshootScale;
-        Vector3 finalVector     = originalScale * finalScale;
+        Vector3 finalVector = originalScale * finalScale;
 
         // Also move the button slightly left (or wherever hoverOffset indicates).
         Vector3 targetPosition = originalPosition + hoverOffset;
-        Vector3 startPosition  = transform.localPosition;
+        Vector3 startPosition = transform.localPosition;
 
         float timer = 0f;
         Vector3 startScale = transform.localScale;
@@ -60,13 +61,18 @@ public class ButtonBounceOnHoverEffect : MonoBehaviour, IPointerEnterHandler, IP
         while (timer < halfDuration)
         {
             float t = timer / halfDuration;
-            transform.localScale    = Vector3.Lerp(startScale, overshootVector, t);
+            transform.localScale = Vector3.Lerp(startScale, overshootVector, t);
             transform.localPosition = Vector3.Lerp(startPosition, targetPosition, t);
             timer += Time.deltaTime;
             yield return null;
         }
         transform.localScale = overshootVector;
         transform.localPosition = targetPosition;
+
+        if (AudioManager.SFX != null && playSoundOnHover)
+        {
+            AudioManager.SFX.Play("hover_4", volume: 0.4f);
+        }
 
         // Phase 2: scale down from overshoot → final (still bigger than original)
         timer = 0f;
