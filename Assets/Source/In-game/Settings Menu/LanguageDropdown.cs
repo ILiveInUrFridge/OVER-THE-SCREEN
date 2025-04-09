@@ -43,7 +43,7 @@ public class LanguageDropdown : MonoBehaviour, ILoggable
         }
         catch (System.Exception e)
         {
-            this.LogError($"Error initializing language dropdown: {e.Message}\n{e.StackTrace}");
+            // this.LogError($"Error initializing language dropdown: {e.Message}\n{e.StackTrace}");
             gameObject.SetActive(false); // Hide this component if it fails
         }
     }
@@ -75,7 +75,7 @@ public class LanguageDropdown : MonoBehaviour, ILoggable
                 {
                     LocalizationSettings.SelectedLocale = availableLocales[i];
                     currentIndex = i;
-                    this.Log($"Loaded saved language: {savedLanguageCode}");
+                    // this.Log($"Loaded saved language: {savedLanguageCode}");
                     break;
                 }
             }
@@ -110,14 +110,14 @@ public class LanguageDropdown : MonoBehaviour, ILoggable
             if (!hasSavedPreference && locale == currentLocale)
             {
                 currentIndex = i;
-                this.Log($"Current locale: {locale.Identifier.Code} ({displayName})");
+                // this.Log($"Current locale: {locale.Identifier.Code} ({displayName})");
             }
         }
         
         // If no supported locales were found, show a warning and disable the dropdown
         if (options.Count == 0)
         {
-            this.LogWarning("None of the supported languages are available in the Localization Settings.");
+            // this.LogWarning("None of the supported languages are available in the Localization Settings.");
             gameObject.SetActive(false);
             return;
         }
@@ -140,7 +140,7 @@ public class LanguageDropdown : MonoBehaviour, ILoggable
         if (index >= 0 && index < availableLocales.Count)
         {
             Locale selectedLocale = availableLocales[index];
-            this.Log($"Changing language to: {selectedLocale.Identifier.Code}");
+            // this.Log($"Changing language to: {selectedLocale.Identifier.Code}");
             
             // Save the preference
             PlayerPrefs.SetString(PREFS_LANGUAGE_CODE, selectedLocale.Identifier.Code);

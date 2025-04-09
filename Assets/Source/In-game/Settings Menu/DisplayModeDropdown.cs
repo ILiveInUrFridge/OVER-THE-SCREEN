@@ -47,7 +47,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
         }
         catch (Exception e)
         {
-            this.LogError($"Error initializing display mode dropdown: {e.Message}");
+            // this.LogError($"Error initializing display mode dropdown: {e.Message}");
             gameObject.SetActive(false); // Hide this component if it fails
         }
     }
@@ -76,7 +76,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
         if (savedIndex >= 0 && savedIndex < displayModes.Length)
         {
             displayModeDropdown.SetValueWithoutNotify(savedIndex);
-            this.Log($"Loaded saved display mode preference: {displayModeNames[savedIndex]}");
+            // this.Log($"Loaded saved display mode preference: {displayModeNames[savedIndex]}");
             return;
         }
         
@@ -90,7 +90,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
         if (currentIndex < 0)
         {
             currentIndex = 0;
-            this.LogWarning($"Current display mode ({currentMode}) not found in options, defaulting to {displayModeNames[0]}");
+            // this.LogWarning($"Current display mode ({currentMode}) not found in options, defaulting to {displayModeNames[0]}");
         }
         
         // Set dropdown value without triggering the listener
@@ -109,7 +109,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
             PlayerPrefs.Save();
             
             FullScreenMode newMode = displayModes[index];
-            this.Log($"Changing display mode to: {displayModeNames[index]} ({newMode})");
+            // this.Log($"Changing display mode to: {displayModeNames[index]} ({newMode})");
             
             try
             {
@@ -151,7 +151,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
                         newMode,
                         Screen.currentResolution.refreshRateRatio
                     );
-                    this.Log($"Display mode changed to {displayModeNames[index]} (fallback)");
+                    // this.Log($"Display mode changed to {displayModeNames[index]} (fallback)");
                     
                     // Wait a frame for the mode change to take effect
                     StartCoroutine(UpdateResolutionDropdownAfterDisplayModeChange());
@@ -159,12 +159,12 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
             }
             catch (Exception e)
             {
-                this.LogError($"Error changing display mode: {e.Message}");
+                // this.LogError($"Error changing display mode: {e.Message}");
             }
         }
         else
         {
-            this.LogError($"Invalid display mode index: {index}");
+            // this.LogError($"Invalid display mode index: {index}");
         }
     }
     
@@ -208,7 +208,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
         }
         catch (Exception e)
         {
-            this.LogError($"Error in first step of display mode change: {e.Message}");
+            // this.LogError($"Error in first step of display mode change: {e.Message}");
         }
         
         // Wait after first resolution change
@@ -240,7 +240,7 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
         }
         catch (Exception e)
         {
-            this.LogError($"Error positioning window: {e.Message}");
+            // this.LogError($"Error positioning window: {e.Message}");
         }
         
         // Wait after moving window
@@ -258,14 +258,14 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
                     Screen.currentResolution.refreshRateRatio
                 );
                 
-                this.Log($"Forced fullscreen on monitor {monitorIndex}, resolution {targetDisplay.width}x{targetDisplay.height}");
+                // this.Log($"Forced fullscreen on monitor {monitorIndex}, resolution {targetDisplay.width}x{targetDisplay.height}");
             }
             
-            this.Log($"Display mode changed to {displayModeNames[displayModeIndex]} on monitor {monitorIndex}");
+            // this.Log($"Display mode changed to {displayModeNames[displayModeIndex]} on monitor {monitorIndex}");
         }
         catch (Exception e)
         {
-            this.LogError($"Error in final step of display mode change: {e.Message}");
+            // this.LogError($"Error in final step of display mode change: {e.Message}");
         }
         
         // Wait for the display mode change to take effect
