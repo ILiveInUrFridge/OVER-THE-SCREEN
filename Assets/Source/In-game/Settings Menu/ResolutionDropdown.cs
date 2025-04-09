@@ -24,7 +24,7 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
     
     public void RefreshResolutions()
     {
-        this.Log("Refreshing resolutions list");
+        // this.Log("Refreshing resolutions list");
         
         // Get all available resolutions
         Resolution[] allResolutions = Screen.resolutions;
@@ -91,14 +91,14 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
             {
                 currentIndex = i;
                 foundMatch = true;
-                this.Log($"Found matching resolution at index {i}: {res.width}x{res.height}");
+                // this.Log($"Found matching resolution at index {i}: {res.width}x{res.height}");
             }
         }
         
         // If no match was found, default to first (highest) resolution
         if (!foundMatch && availableResolutions.Count > 0)
         {
-            this.Log($"No matching resolution found for {currentWidth}x{currentHeight}, defaulting to highest");
+            // this.Log($"No matching resolution found for {currentWidth}x{currentHeight}, defaulting to highest");
             currentIndex = 0;
         }
         
@@ -120,7 +120,7 @@ public class ResolutionDropdown : MonoBehaviour, ILoggable
         if (index >= 0 && index < availableResolutions.Count)
         {
             Resolution selected = availableResolutions[index];
-            this.Log($"Changing resolution to: {selected.width}x{selected.height}");
+            // this.Log($"Changing resolution to: {selected.width}x{selected.height}");
             
             // Save the new resolution preference
             PlayerPrefs.SetInt(PREFS_RESOLUTION_WIDTH, selected.width);
