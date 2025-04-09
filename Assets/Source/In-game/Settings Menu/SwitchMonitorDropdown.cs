@@ -34,24 +34,18 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
 
             if (displayLayout.Count == 0)
             {
-                // this.LogWarning("No displays found using GetDisplayLayout API. This might be unsupported on your platform.");
+                this.LogWarning("No displays found using GetDisplayLayout API. This might be unsupported on your platform.");
                 gameObject.SetActive(false); // Hide this component if no displays are found
                 return;
             }
 
             // Populate the dropdown with display info
             PopulateDropdown();
-
-            // this.Log($"Found {displayLayout.Count} displays");
-            // foreach (var display in displayLayout)
-            // {
-            //     this.Log($"Display: {display.name}, {display.width}x{display.height}");
-            // }
         }
         catch (Exception e)
         {
             // Catch any exceptions during startup
-            // this.LogError($"Error initializing monitor dropdown: {e.Message}\n{e.StackTrace}");
+            this.LogError($"Error initializing monitor dropdown: {e.Message}\n{e.StackTrace}");
             gameObject.SetActive(false); // Hide this component if it fails
         }
     }
@@ -84,7 +78,6 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         if (savedIndex >= 0 && savedIndex < displayLayout.Count)
         {
             monitorDropdown.value = savedIndex;
-            // this.Log($"Using saved monitor index: {savedIndex}");
         }
         else
         {
@@ -113,7 +106,6 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         PlayerPrefs.Save();
 
         DisplayInfo display = displayLayout[index];
-        // this.Log($"Attempting to switch to monitor {index + 1}: {display.name}");
 
         try
         {
@@ -129,7 +121,6 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
             int tempWidth = Mathf.Min(currentWidth - 100, 1280);
             int tempHeight = Mathf.Min(currentHeight - 100, 720);
 
-            // this.Log($"Switching to windowed mode temporarily at {tempWidth}x{tempHeight}");
             Screen.SetResolution(tempWidth, tempHeight, FullScreenMode.Windowed);
 
             // Step 2: Wait a frame to let the windowed mode take effect
@@ -170,8 +161,6 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         if (originalMode != FullScreenMode.Windowed &&
             (targetDisplay.width > originalWidth || targetDisplay.height > originalHeight))
         {
-            // this.Log($"Switching to higher resolution display in fullscreen mode - adjusting to native resolution: {targetDisplay.width}x{targetDisplay.height}");
-
             // Use the target display's native resolution
             Screen.SetResolution(
                 targetDisplay.width,
@@ -183,7 +172,6 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         else
         {
             // Otherwise, restore original mode and resolution
-            // this.Log($"Restoring mode: {originalMode} and resolution: {originalWidth}x{originalHeight}");
             Screen.SetResolution(originalWidth, originalHeight, originalMode, originalRefreshRate);
         }
 
@@ -195,8 +183,6 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         {
             resolutionDropdownComponent.UpdateToMatchCurrentResolution();
         }
-
-        // this.Log($"Monitor switch to {monitorIndex + 1} complete");
     }
 
     /// <summary>
