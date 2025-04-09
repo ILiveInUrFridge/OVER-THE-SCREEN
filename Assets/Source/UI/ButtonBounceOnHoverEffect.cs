@@ -14,6 +14,7 @@ public class ButtonBounceOnHoverEffect : MonoBehaviour, IPointerEnterHandler, IP
     public float bounceInDuration = 0.15f;
     [Tooltip("Time to revert back to original scale on mouse exit.")]
     public float bounceOutDuration = 0.1f;
+
     public bool playSoundOnHover = true;
 
     [Header("Optional - Position Offset")]
@@ -71,7 +72,7 @@ public class ButtonBounceOnHoverEffect : MonoBehaviour, IPointerEnterHandler, IP
 
         if (AudioManager.SFX != null && playSoundOnHover)
         {
-            AudioManager.SFX.Play("hover_4", volume: 0.4f);
+            AudioManager.SFX.Play("hover_4", volume: 0.6f);
         }
 
         // Phase 2: scale down from overshoot → final (still bigger than original)
