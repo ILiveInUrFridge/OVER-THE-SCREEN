@@ -6,7 +6,7 @@ using UnityEngine.Audio;
 ///     This component coordinates the specialized audio players (SFX, Music, Voice)
 ///     and provides global audio control.
 /// </summary>
-public class AudioManager : MonoBehaviour
+public class AudioManager : MonoBehaviour, ILoggable
 {
     // Default parameter names if VolumeManager is not available
     private const string DEFAULT_MASTER_PARAM = "MasterVolume";
@@ -144,7 +144,7 @@ public class AudioManager : MonoBehaviour
     {
         if (audioMixer == null)
         {
-            Debug.LogWarning("AudioManager: No AudioMixer assigned. Audio features will be limited.");
+            this.LogWarning("No AudioMixer assigned. Audio features will be limited.");
         }
         
         if (createPlayersIfMissing)
@@ -209,7 +209,7 @@ public class AudioManager : MonoBehaviour
             }
             catch (System.Exception e)
             {
-                Debug.LogError($"Error assigning AudioMixerGroup: {e.Message}");
+                this.LogError($"Error assigning AudioMixerGroup: {e.Message}");
             }
         }
     }

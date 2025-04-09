@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.Audio;
 using TMPro;
 
-public class VolumeManager : MonoBehaviour
+public class VolumeManager : MonoBehaviour, ILoggable
 {
     [Header("Debug")]
     [SerializeField] private bool debugMode = true;
@@ -55,52 +55,8 @@ public class VolumeManager : MonoBehaviour
 
     private void Start()
     {
-        if (debugMode)
-        {
-            Debug.Log("VolumeManager: Starting initialization");
-            VerifySetup();
-        }
-        
         LoadSavedVolumes();
         SetupEventListeners();
-        
-        if (debugMode)
-        {
-            Debug.Log("VolumeManager: Initialization complete");
-        }
-    }
-    
-    private void VerifySetup()
-    {
-        // Check if all UI elements are assigned
-        Debug.Log($"Master slider: {(masterSlider != null ? "Assigned" : "Missing")}");
-        Debug.Log($"Music slider: {(musicSlider != null ? "Assigned" : "Missing")}");
-        Debug.Log($"SFX slider: {(sfxSlider != null ? "Assigned" : "Missing")}");
-        Debug.Log($"Voice slider: {(voiceSlider != null ? "Assigned" : "Missing")}");
-        
-        // Check if AudioMixer is assigned
-        Debug.Log($"AudioMixer: {(audioMixer != null ? "Assigned" : "Missing")}");
-        
-        // Verify AudioMixer parameters if mixer is assigned
-        if (audioMixer != null)
-        {
-            VerifyAudioMixerParameter(MASTER_VOL_PARAM);
-            VerifyAudioMixerParameter(MUSIC_VOL_PARAM);
-            VerifyAudioMixerParameter(SFX_VOL_PARAM);
-            VerifyAudioMixerParameter(VOICE_VOL_PARAM);
-        }
-    }
-    
-    private void VerifyAudioMixerParameter(string paramName)
-    {
-        if (audioMixer.GetFloat(paramName, out float value))
-        {
-            Debug.Log($"AudioMixer parameter '{paramName}' is exposed (current value: {value} dB)");
-        }
-        else
-        {
-            Debug.LogError($"AudioMixer parameter '{paramName}' is NOT exposed! Please expose it in the Audio Mixer editor.");
-        }
     }
     
     private void LoadSavedVolumes()
@@ -110,11 +66,6 @@ public class VolumeManager : MonoBehaviour
         musicSlider.value = PlayerPrefs.GetFloat(PREFS_MUSIC, defaultMusic);
         sfxSlider.value = PlayerPrefs.GetFloat(PREFS_SFX, defaultSFX);
         voiceSlider.value = PlayerPrefs.GetFloat(PREFS_VOICE, defaultVoice);
-        
-        if (debugMode)
-        {
-            Debug.Log($"Loaded values - Master: {masterSlider.value}, Music: {musicSlider.value}, SFX: {sfxSlider.value}, Voice: {voiceSlider.value}");
-        }
         
         // Force initial update of UI and mixer
         UpdateAllVolumeSettings();
@@ -139,11 +90,6 @@ public class VolumeManager : MonoBehaviour
         musicResetButton.onClick.AddListener(() => ResetVolume(musicSlider, musicInput, defaultMusic, MUSIC_VOL_PARAM, PREFS_MUSIC));
         sfxResetButton.onClick.AddListener(() => ResetVolume(sfxSlider, sfxInput, defaultSFX, SFX_VOL_PARAM, PREFS_SFX));
         voiceResetButton.onClick.AddListener(() => ResetVolume(voiceSlider, voiceInput, defaultVoice, VOICE_VOL_PARAM, PREFS_VOICE));
-        
-        if (debugMode)
-        {
-            Debug.Log("VolumeManager: Event listeners set up");
-        }
     }
     
     private void UpdateAllVolumeSettings()
@@ -152,11 +98,6 @@ public class VolumeManager : MonoBehaviour
         OnSliderChanged(musicSlider.value, musicInput, MUSIC_VOL_PARAM, PREFS_MUSIC);
         OnSliderChanged(sfxSlider.value, sfxInput, SFX_VOL_PARAM, PREFS_SFX);
         OnSliderChanged(voiceSlider.value, voiceInput, VOICE_VOL_PARAM, PREFS_VOICE);
-        
-        if (debugMode)
-        {
-            Debug.Log("VolumeManager: All volume settings updated");
-        }
     }
 
     /// <summary>
@@ -179,11 +120,6 @@ public class VolumeManager : MonoBehaviour
         UpdateVolumeLevel(sliderValue, volumeParam);
         
         updatingUI = false;
-        
-        if (debugMode)
-        {
-            Debug.Log($"Slider changed: {volumeParam} = {sliderValue}");
-        }
     }
     
     /// <summary>
@@ -216,11 +152,6 @@ public class VolumeManager : MonoBehaviour
             }
             
             AudioManager.Instance.SetChannelVolume(paramType, sliderValue);
-            
-            if (debugMode)
-            {
-                Debug.Log($"Updated volume via AudioManager: {paramType} = {sliderValue}");
-            }
         }
         // Fall back to direct AudioMixer control if no AudioManager is available
         else if (audioMixer != null)
@@ -228,22 +159,10 @@ public class VolumeManager : MonoBehaviour
             // Convert to decibels for AudioMixer
             float dB = VolumeToDecibels(sliderValue);
             bool success = audioMixer.SetFloat(volumeParam, dB);
-            
-            if (debugMode)
-            {
-                if (success)
-                {
-                    Debug.Log($"Updated volume directly: {volumeParam} = {dB} dB");
-                }
-                else
-                {
-                    Debug.LogError($"Failed to set volume: {volumeParam} = {dB} dB");
-                }
-            }
         }
         else if (debugMode)
         {
-            Debug.LogWarning("No AudioManager or AudioMixer available to control volume");
+            this.LogWarning("No AudioManager or AudioMixer available to control volume");
         }
     }
 
