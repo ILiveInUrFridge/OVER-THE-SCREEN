@@ -48,11 +48,13 @@ public class LoadingScreenController : MonoBehaviour
     private float STRIPE_DELAY = 0.05f; // Delay between each stripe's movement
 
     // Timings
-    private float barSlideDuration   = 0.8f;  // Move bar on screen
-    private float textSlideDuration  = 0.5f;  // Move text on/off screen
-    private float loadingFillDuration = 13.5f;  // 2.0→15.5 in timeline
+    // I'm not sure what the FUCK is wrong, but the timing is for some reason different in the build
+    // than the editor. Fuck this shit bruh
+    private float barSlideDuration    = 0.8f;  // Move bar on screen
+    private float textSlideDuration   = 0.5f;  // Move text on/off screen
+    private float loadingFillDuration = 14.5f;  // 2.0→16.5 in timeline
     private float stripeExitDuration  = 0.4f; // Duration for stripe exit
-    private float logoFadeDuration    = 0.4f; // Duration for logo fade
+    private float logoFadeDuration    = 0.2f; // Duration for logo fade
     private float logoGlowDuration    = 0.4f; // Duration for logo glow effect
 
     private void Start()
@@ -72,7 +74,7 @@ public class LoadingScreenController : MonoBehaviour
         // Indefinite horizontal scroll on the stripe group
         if (stripeGroup != null)
         {
-            stripeGroup.anchoredPosition += Vector2.left * (stripeScrollSpeed * Time.deltaTime);
+            stripeGroup.anchoredPosition += Vector2.left * (stripeScrollSpeed * Time.unscaledDeltaTime);
         }
     }
 
@@ -100,36 +102,39 @@ public class LoadingScreenController : MonoBehaviour
         }
 
         // 0.0s: Start
-        yield return new WaitForSeconds(0.3f);
+        yield return new WaitForSecondsRealtime(0.3f);
         // 0.3s: Stripes are scrolling in background
 
         // [0.3s→1.1s] Slide the bar onto screen
         loadingBarParent
             .DOAnchorPos(BAR_ONSCREEN_POS, barSlideDuration)
-            .SetEase(Ease.OutBack);
-        yield return new WaitForSeconds(barSlideDuration);
+            .SetEase(Ease.OutBack)
+            .SetUpdate(true); // Force update even when timescale is changed
+        yield return new WaitForSecondsRealtime(barSlideDuration);
         // 1.1s: Bar is now on screen
 
         // [1.1s→1.6s] Text slides up
         loadingText.rectTransform
                    .DOAnchorPos(TEXT_ONSCREEN_POS, textSlideDuration)
-                   .SetEase(Ease.OutSine);
+                   .SetEase(Ease.OutSine)
+                   .SetUpdate(true);
 
         copyrightText.rectTransform
                      .DOAnchorPos(COPYRIGHT_ONSCREEN, textSlideDuration)
-                     .SetEase(Ease.OutSine);
-        yield return new WaitForSeconds(0.5f);
+                     .SetEase(Ease.OutSine)
+                     .SetUpdate(true);
+        yield return new WaitForSecondsRealtime(0.5f);
         // 1.6s: Text is now visible
 
         // [1.6s→2.0s] Small buffer
-        yield return new WaitForSeconds(0.4f);
+        yield return new WaitForSecondsRealtime(0.4f);
         // 2.0s: Begin filling the logo
 
         // [2.0s→15.5s] Fill the logo mask over 13.5s
-        float startTime = Time.time;
-        while (Time.time < startTime + loadingFillDuration)
+        float startTime = Time.unscaledTime;
+        while (Time.unscaledTime < startTime + loadingFillDuration)
         {
-            float elapsed = Time.time - startTime;
+            float elapsed = Time.unscaledTime - startTime;
             float t = Mathf.Clamp01(elapsed / loadingFillDuration);
 
             // The child's fill
@@ -143,26 +148,29 @@ public class LoadingScreenController : MonoBehaviour
         logoMask.fillAmount = 1f;
         loadingText.text = "COMPLETE!";
 
-        yield return new WaitForSeconds(0.5f);
+        yield return new WaitForSecondsRealtime(0.5f);
         // 16.0s: Start moving bar to center
 
         // [16.0s→16.5s] Move the logo loading bar to center with easing
         loadingBarParent
             .DOAnchorPos(BAR_FINAL_CENTER, 0.5f)
-            .SetEase(Ease.OutBack, 1.2f);
+            .SetEase(Ease.OutBack, 1.2f)
+            .SetUpdate(true);
 
         // [16.0s→16.5s] Move texts off-screen with easing
         loadingText.rectTransform
                    .DOAnchorPos(TEXT_EXIT_POS, textSlideDuration)
-                   .SetEase(Ease.InOutQuad);
+                   .SetEase(Ease.InOutQuad)
+                   .SetUpdate(true);
         copyrightText.rectTransform
                      .DOAnchorPos(TEXT_EXIT_POS, textSlideDuration)
-                     .SetEase(Ease.InOutQuad);
-        yield return new WaitForSeconds(textSlideDuration);
+                     .SetEase(Ease.InOutQuad)
+                     .SetUpdate(true);
+        yield return new WaitForSecondsRealtime(textSlideDuration);
         // 16.5s: Text is off-screen, bar is centered
 
         // [16.5s→17.5s] Wait for beat drop
-        yield return new WaitForSeconds(1.0f);
+        yield return new WaitForSecondsRealtime(1.0f);
         // 17.5s: Ready for beat drop
 
         // ========== BEAT DROP (17.5s) ==========
@@ -189,7 +197,8 @@ public class LoadingScreenController : MonoBehaviour
                 button.localPosition += new Vector3(startX, 0, 0);
                 button.DOLocalMoveX(0, buttonDuration)
                       .SetEase(Ease.OutBack)
-                      .SetDelay(buttonDelay);
+                      .SetDelay(buttonDelay)
+                      .SetUpdate(true);
                 buttonDelay += 0.1f;
             }
         }
@@ -210,6 +219,7 @@ public class LoadingScreenController : MonoBehaviour
                 var tween = rt.DOAnchorPos(targetPos, stripeExitDuration)
                              .SetEase(Ease.InOutQuad)
                              .SetDelay(currentDelay)
+                             .SetUpdate(true)
                              .OnComplete(() => rt.gameObject.SetActive(false));
                 stripeTweens.Add(tween);
                 currentDelay += STRIPE_DELAY;
@@ -231,6 +241,7 @@ public class LoadingScreenController : MonoBehaviour
                 var tween = rt.DOAnchorPos(targetPos, stripeExitDuration)
                              .SetEase(Ease.InOutQuad)
                              .SetDelay(currentDelay)
+                             .SetUpdate(true)
                              .OnComplete(() => rt.gameObject.SetActive(false));
                 stripeTweens.Add(tween);
                 currentDelay += STRIPE_DELAY;
@@ -238,14 +249,15 @@ public class LoadingScreenController : MonoBehaviour
         }
 
         // [17.9s→18.3s] Wait for animations
-        yield return new WaitForSeconds(logoGlowDuration);
+        yield return new WaitForSecondsRealtime(logoGlowDuration);
 
         // [18.3s→18.7s] Fade out the loading bar
         loadingBarCanvasGroup.DOFade(0f, logoFadeDuration)
-                            .SetEase(Ease.InQuad);
+                            .SetEase(Ease.InQuad)
+                            .SetUpdate(true);
 
         // Wait for all animations to complete - approximately 19.1s total
-        yield return new WaitForSeconds(Mathf.Max(logoFadeDuration, stripeExitDuration + (currentDelay - STRIPE_DELAY)));
+        yield return new WaitForSecondsRealtime(Mathf.Max(logoFadeDuration, stripeExitDuration + (currentDelay - STRIPE_DELAY)));
 
         // Finally, hide the loading screen altogether
         gameObject.SetActive(false);

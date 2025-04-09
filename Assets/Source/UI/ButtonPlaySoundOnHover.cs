@@ -27,17 +27,10 @@ public class ButtonPlaySoundOnHover : MonoBehaviour, IPointerEnterHandler, ILogg
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (AudioManager.SFX != null)
+        foreach (var sound in soundData)
         {
-            foreach (var sound in soundData)
-            {
-                this.Log($"Playing sound: {sound.name} with volume: {sound.volume}");
-                AudioManager.SFX.Play(sound.name, sound.volume);
-            }
-        }
-        else
-        {
-            this.LogWarning("No AudioManager.SFX found in scene!");
+            // this.Log($"Playing sound: {sound.name} with volume: {sound.volume}");
+            AudioManager.SFX.Play(sound.name, sound.volume);
         }
     }
 }

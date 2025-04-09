@@ -12,10 +12,7 @@ public class SettingsMenuController : MonoBehaviour
         settingsPanel.SetActive(true);
 
         // Play menu open sound
-        if (AudioManager.SFX != null)
-        {
-            AudioManager.SFX.Play("settings_menu_open", volume: 2.0f);
-        }
+        AudioManager.SFX.Play("settings_menu_open", volume: 3.0f);
     }
 
     /// <summary>
@@ -26,9 +23,6 @@ public class SettingsMenuController : MonoBehaviour
         settingsPanel.SetActive(false);
 
         // Play menu close sound
-        if (AudioManager.SFX != null)
-        {
-            AudioManager.SFX.Play("settings_menu_close", volume: 2.0f);
-        }
+        AudioManager.SFX.Play("settings_menu_close", volume: 3.0f);
     }
 }
