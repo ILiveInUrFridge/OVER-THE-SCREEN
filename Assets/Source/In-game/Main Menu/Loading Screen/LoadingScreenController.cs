@@ -27,6 +27,10 @@ public class LoadingScreenController : MonoBehaviour
     [Header("Main Menu")]
     public GameObject mainMenuRoot;
 
+    [Header("Debug Options")]
+    [Tooltip("When checked, skips the loading animation in editor (has no effect in builds)")]
+    [SerializeField] private bool skipInEditor = false;
+
     // Hard-coded 4K positions (Canvas center is (0,0)):
     // Positions for the entire "loadingBarParent":
     private Vector2 BAR_ONSCREEN_POS = new Vector2(0f, 250f); 
@@ -61,6 +65,23 @@ public class LoadingScreenController : MonoBehaviour
     {
         // Hide the main menu initially
         if (mainMenuRoot) mainMenuRoot.SetActive(false);
+
+        // Check if we should skip in editor
+        #if UNITY_EDITOR
+        if (skipInEditor)
+        {
+            // Still need to play the menu music
+            if (AudioManager.Music != null)
+            {
+                AudioManager.Music.Play("main_menu_bgm");
+            }
+            
+            // Skip the animation and go straight to main menu
+            if (mainMenuRoot) mainMenuRoot.SetActive(true);
+            gameObject.SetActive(false);
+            return;
+        }
+        #endif
 
         // Position items off-screen
         SetupInitialPositions();

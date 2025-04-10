@@ -143,8 +143,6 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         // Wait for the window mode change to apply
         yield return new WaitForEndOfFrame();
 
-        // this.Log($"Moving window to monitor {monitorIndex + 1}");
-
         // Move window to center of target monitor
         Vector2Int position = new Vector2Int(
             targetDisplay.width / 2 - Screen.width / 2,
@@ -156,23 +154,35 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         // Wait for move to complete
         yield return new WaitForEndOfFrame();
 
-        // For fullscreen modes when moving to a higher resolution monitor,
-        // automatically adjust to the new monitor's native resolution
-        if (originalMode != FullScreenMode.Windowed &&
-            (targetDisplay.width > originalWidth || targetDisplay.height > originalHeight))
+        if (originalMode == FullScreenMode.Windowed)
         {
-            // Use the target display's native resolution
+            // For windowed mode, calculate appropriate resolution for the target monitor
+            var (windowedWidth, windowedHeight) = DisplayUtils.CalculateWindowedResolution(targetDisplay);
+            
+            // Set the resolution to match the scaled size for the new monitor
+            Screen.SetResolution(
+                windowedWidth,
+                windowedHeight,
+                FullScreenMode.Windowed,
+                originalRefreshRate
+            );
+            
+            // Re-center the window on the new monitor
+            position = new Vector2Int(
+                targetDisplay.width / 2 - windowedWidth / 2,
+                targetDisplay.height / 2 - windowedHeight / 2
+            );
+            Screen.MoveMainWindowTo(targetDisplay, position);
+        }
+        else if (originalMode != FullScreenMode.Windowed)
+        {
+            // For fullscreen modes, use the target display's native resolution
             Screen.SetResolution(
                 targetDisplay.width,
                 targetDisplay.height,
                 originalMode,
                 originalRefreshRate
             );
-        }
-        else
-        {
-            // Otherwise, restore original mode and resolution
-            Screen.SetResolution(originalWidth, originalHeight, originalMode, originalRefreshRate);
         }
 
         // Let the system catch up
@@ -181,6 +191,7 @@ public class SwitchMonitorDropdown : MonoBehaviour, ILoggable
         // Update resolution dropdown to match the new monitor options
         if (resolutionDropdownComponent != null)
         {
+            resolutionDropdownComponent.RefreshResolutions();
             resolutionDropdownComponent.UpdateToMatchCurrentResolution();
         }
     }
