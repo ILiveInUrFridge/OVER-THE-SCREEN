@@ -7,7 +7,7 @@ using UnityEngine.Localization.Settings;
 /// <summary>
 ///     This is a dropdown that allows the player to switch between languages.
 /// </summary>
-public class LanguageDropdown : MonoBehaviour, ILoggable
+public class LanguageDropdown : MonoBehaviour
 {
     [SerializeField] private TMP_Dropdown languageDropdown;
     private List<Locale> availableLocales = new List<Locale>();
@@ -29,22 +29,14 @@ public class LanguageDropdown : MonoBehaviour, ILoggable
 
     private void Start()
     {
-        try
+        // Wait for the localization system to initialize
+        if (LocalizationSettings.InitializationOperation.IsDone)
         {
-            // Wait for the localization system to initialize
-            if (LocalizationSettings.InitializationOperation.IsDone)
-            {
-                PopulateDropdown();
-            }
-            else
-            {
-                LocalizationSettings.InitializationOperation.Completed += _ => PopulateDropdown();
-            }
+            PopulateDropdown();
         }
-        catch (System.Exception e)
+        else
         {
-            this.LogError($"Error initializing language dropdown: {e.Message}\n{e.StackTrace}");
-            gameObject.SetActive(false); // Hide this component if it fails
+            LocalizationSettings.InitializationOperation.Completed += _ => PopulateDropdown();
         }
     }
 

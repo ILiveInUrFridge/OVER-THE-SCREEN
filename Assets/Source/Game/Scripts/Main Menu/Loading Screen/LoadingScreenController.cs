@@ -4,6 +4,7 @@ using TMPro;
 using DG.Tweening;
 using System.Collections;
 using System.Collections.Generic;
+using Game.Audio;
 
 public class LoadingScreenController : MonoBehaviour
 {
@@ -39,7 +40,7 @@ public class LoadingScreenController : MonoBehaviour
 
     // Text on-screen positions
     private Vector2 TEXT_ONSCREEN_POS  = new Vector2(0f, -560f);
-    private Vector2 COPYRIGHT_ONSCREEN  = new Vector2(0f, -1000f);
+    private Vector2 COPYRIGHT_ONSCREEN = new Vector2(0f, -1000f);
 
     // Text off-screen below
     private Vector2 TEXT_START_POS = new Vector2(0f, -2200f);
@@ -47,13 +48,11 @@ public class LoadingScreenController : MonoBehaviour
 
     // Stripe exit ratio (x:y ratio for movement)
     private Vector2 WHITE_STRIPE_RATIO = new Vector2(4305f, 2477f).normalized;    // Up and right direction
-    private Vector2 PINK_STRIPE_RATIO = new Vector2(-4305f, -2477f).normalized;  // Down and left direction
+    private Vector2 PINK_STRIPE_RATIO  = new Vector2(-4305f, -2477f).normalized;  // Down and left direction
     private float STRIPE_MOVE_DISTANCE = 6000f; // Doubled distance for stripe movement
     private float STRIPE_DELAY = 0.05f; // Delay between each stripe's movement
 
     // Timings
-    // I'm not sure what the FUCK is wrong, but the timing is for some reason different in the build
-    // than the editor. Fuck this shit bruh
     private float barSlideDuration    = 0.8f;  // Move bar on screen
     private float textSlideDuration   = 0.5f;  // Move text on/off screen
     private float loadingFillDuration = 14.5f;  // 2.0→16.5 in timeline

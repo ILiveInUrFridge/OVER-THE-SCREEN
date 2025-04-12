@@ -10,8 +10,11 @@ using System.Collections;
 ///     I'm not sure whether to enable exclusive fullscreen or not because the game itself
 ///     is generally 2D without any heavy graphics work going on, so I doubt fullscreen will ever be necessary.
 ///     However... if some people do want it - say, experiencing performance issues - I might enable it in the future.
+///     
+///     But the game itself is using like at most 15% of the GPU (RTX 3060) on the 4K monitor + rendering 4K videos
+///     without any issues so like...
 /// </summary>
-public class DisplayModeDropdown : MonoBehaviour, ILoggable
+public class DisplayModeDropdown : MonoBehaviour
 {
     [SerializeField] private TMP_Dropdown displayModeDropdown;
     [SerializeField] private ResolutionDropdown resolutionDropdownComponent;
@@ -37,19 +40,11 @@ public class DisplayModeDropdown : MonoBehaviour, ILoggable
     
     private void Start()
     {
-        try
-        {
-            // Populate dropdown with display mode options
-            PopulateDropdown();
-            
-            // Set initial selection based on saved preference or current display mode
-            SetInitialSelection();
-        }
-        catch (Exception e)
-        {
-            this.LogError($"Error initializing display mode dropdown: {e.Message}");
-            gameObject.SetActive(false); // Hide this component if it fails
-        }
+        // Populate dropdown with display mode options
+        PopulateDropdown();
+        
+        // Set initial selection based on saved preference or current display mode
+        SetInitialSelection();
     }
     
     /// <summary>

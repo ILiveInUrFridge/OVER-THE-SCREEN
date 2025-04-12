@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.U2D.PSD;
+using Utilities;
 
 public class SpriteImportSettings : AssetPostprocessor, ILoggable
 {
