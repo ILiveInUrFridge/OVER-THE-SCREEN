@@ -9,7 +9,7 @@ using System.Collections;
 ///     Only first five resolutions are shown, and resolutions dynamically change
 ///     based on the current display monitor.
 /// </summary>
-public class ResolutionDropdown : MonoBehaviour, ILoggable
+public class ResolutionDropdown : MonoBehaviour
 {
     [SerializeField] private TMP_Dropdown resolutionDropdown;
     private List<Resolution> availableResolutions = new List<Resolution>();

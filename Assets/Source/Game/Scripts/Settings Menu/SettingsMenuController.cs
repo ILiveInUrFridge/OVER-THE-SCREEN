@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using Game.Audio;
 public class SettingsMenuController : MonoBehaviour
 {
     [SerializeField] private GameObject settingsPanel;

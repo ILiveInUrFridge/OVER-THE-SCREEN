@@ -1,7 +1,14 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections;
+using Game.Audio;
 
+/// <summary>
+///     Component that adds a bounce animation effect when a button is hovered
+/// </summary>
+[RequireComponent(typeof(RectTransform))]
+[RequireComponent(typeof(Button))]
 public class ButtonBounceOnHoverEffect : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
 {
     [Header("Scale Settings")]
