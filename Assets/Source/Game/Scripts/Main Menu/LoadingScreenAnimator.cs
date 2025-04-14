@@ -72,7 +72,7 @@ public class LoadingScreenAnimator : MonoBehaviour
             // Still need to play the menu music
             if (AudioManager.Music != null)
             {
-                AudioManager.Music.Play("main_menu_bgm");
+                AudioManager.Music.Play("bgm.main_menu");
             }
             
             // Skip the animation and go straight to main menu
@@ -118,7 +118,7 @@ public class LoadingScreenAnimator : MonoBehaviour
     {
         if (AudioManager.Music != null)
         {
-            AudioManager.Music.Play("main_menu_bgm");
+            AudioManager.Music.Play("bgm.main_menu");
         }
 
         // 0.0s: Start

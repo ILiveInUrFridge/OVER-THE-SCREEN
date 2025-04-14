@@ -90,6 +90,15 @@ namespace Game.Audio
         /// </summary>
         public override int Play(AudioClip clip, float volume = 1.0f, bool loop = true)
         {
+            return Play(clip, volume, loop, 0f);
+        }
+        
+        /// <summary>
+        ///     Play a music track, with crossfade if another track is already playing
+        ///     and optional fade in if no track is currently playing
+        /// </summary>
+        public int Play(AudioClip clip, float volume = 1.0f, bool loop = true, float fadeIn = 0f)
+        {
             if (clip == null) return -1;
             
             // If same music is already playing, do nothing
@@ -113,9 +122,19 @@ namespace Game.Audio
                 
                 AudioSource source = audioSource; // Always use the main audio source for music
                 source.clip = clip;
-                source.volume = volume;
                 source.loop = loop;
-                source.Play();
+                
+                if (fadeIn > 0f)
+                {
+                    source.volume = 0f;
+                    source.Play();
+                    StartCoroutine(FadeIn(source, volume, fadeIn));
+                }
+                else
+                {
+                    source.volume = volume;
+                    source.Play();
+                }
                 
                 activeSounds[soundID] = source;
                 return soundID;
@@ -127,9 +146,17 @@ namespace Game.Audio
         /// </summary>
         public int Play(string trackName)
         {
+            return Play(trackName, 0f);
+        }
+        
+        /// <summary>
+        ///     Play a music track by name with optional fade in
+        /// </summary>
+        public int Play(string trackName, float fadeIn = 0f)
+        {
             if (trackLookup.TryGetValue(trackName, out MusicTrack track))
             {
-                return Play(track.clip, track.volume, track.loop);
+                return Play(track.clip, track.volume, track.loop, fadeIn);
             }
             
             Debug.LogWarning($"MusicPlayer: Track '{trackName}' not found.");
@@ -218,6 +245,23 @@ namespace Game.Audio
                 
                 activeSounds[newID] = audioSource;
             }
+        }
+        
+        /// <summary>
+        ///     Fade in helper coroutine
+        /// </summary>
+        private IEnumerator FadeIn(AudioSource source, float targetVolume, float duration)
+        {
+            float timer = 0;
+            
+            while (timer < duration)
+            {
+                timer += Time.deltaTime;
+                source.volume = Mathf.Lerp(0f, targetVolume, timer / duration);
+                yield return null;
+            }
+            
+            source.volume = targetVolume;
         }
         
         /// <summary>
