@@ -1,17 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
-using Game.Audio;
 using TMPro;
-using System.Linq;
+using Game.Audio;
 
 public class NewGameAnimator : MonoBehaviour
 {
-    [Header("Root that contains all menu buttons")]
+    [Header("Root that contains all main menu elements")]
     public RectTransform mainMenuRoot;
+    public GameObject initialMenu;
 
     [Header("Transition Screen")]
     public GameObject transitionScreen;
@@ -25,7 +26,7 @@ public class NewGameAnimator : MonoBehaviour
     private float cursorBlinkSpeed = 0.5f;
     private float scanlineSpeed = 0.1f;
     private float glitchChance = 0.1f;
-    private string pressAnyKeyMessage = "PRESS ANY KEY TO CONTINUE";
+    private string pressAnyKeyMessage = "PRESS ANY KEY TO PROCEED";
     private int maxConsoleLines = 30; // Maximum number of lines to keep in the console
 
     [Header("Colors")]
@@ -208,7 +209,7 @@ public class NewGameAnimator : MonoBehaviour
 
     public void PlayTransition()
     {
-        AudioManager.Music.FadeOutMusic(fadeDuration);
+        AudioManager.Music.FadeOutMusic(fadeDuration + 1);
         AudioManager.SFX.Play("start_new_game", 0.2f);
 
         // Activate transition screen and start fade to black
@@ -271,60 +272,196 @@ public class NewGameAnimator : MonoBehaviour
         // Add additional delay after screen is black before "turning on" the computer
         yield return new WaitForSeconds(2.0f);
         
-        // Play boot sound here (placeholder comment for where to add your sound code)
-        // AudioManager.SFX.Play("computer_boot", 0.5f);
-        
-        // Now activate scanline overlay to simulate computer turning on, but with a fade
-        if (scanlineOverlay != null) 
+        initialMenu.SetActive(false); // disable main menu
+
+        AudioManager.SFX.Play("switch_6", 0.1f);
+
+        // Additional delay after the switch sound, making like a pc turning on effect and shit
+        yield return new WaitForSeconds(0.5f);
+
+        // Create a CRT monitor power-on effect
+        if (scanlineOverlay != null)
         {
+            AudioManager.Music.Play("ambient.computer_hum");
             // Activate the overlay but set alpha to 0
             scanlineOverlay.gameObject.SetActive(true);
             Color startColor = scanlineOverlay.color;
             startColor.a = 0f;
             scanlineOverlay.color = startColor;
-            
-            // Reset shader values if material exists
+
+            // Define the final subtle alpha (15/255 ≈ 0.059)
+            float targetAlpha = 15f / 255f;
+
+            // Store the default shader values in case we can't get them from the material
+            float originalIntensity = 0.5f;
+            float originalCurvatureX = 0.1f;
+            float originalCurvatureY = 0.1f;
+
+            // Reset shader values if material exists and get original values
             if (scanlineOverlay.material != null)
             {
-                scanlineOverlay.material.SetFloat("_Offset", 0f);
                 shaderMaterial = scanlineOverlay.material;
-            }
-            
-            // Fade in the scanline overlay
-            float fadeDuration = 0.2f;
-            float elapsedTime = 0f;
-            
-            // Define a more subtle final alpha (15/255 ≈ 0.059)
-            float targetAlpha = 15f/255f;
-            
-            while (elapsedTime < fadeDuration)
-            {
-                elapsedTime += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsedTime / fadeDuration);
-                
-                // Apply easing for smoother fade-in
-                float easedT = Mathf.SmoothStep(0, 1, t);
-                
-                // Update the color
-                Color newColor = scanlineOverlay.color;
-                newColor.a = Mathf.Lerp(0f, targetAlpha, easedT);
-                scanlineOverlay.color = newColor;
-                
-                // Also gradually increase initial glitch intensity for a "warming up" effect
+                shaderMaterial.SetFloat("_Offset", 0f);
+
+                // Get original shader values if possible
                 if (shaderMaterial != null)
                 {
-                    float initialGlitch = baseGlitchIntensity * 1.5f; // Start with higher glitch
-                    float targetGlitch = baseGlitchIntensity; // End with normal glitch level
-                    shaderMaterial.SetFloat("_GlitchIntensity", Mathf.Lerp(initialGlitch, targetGlitch, easedT));
+                    originalIntensity = shaderMaterial.GetFloat("_Intensity");
+                    originalCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
+                    originalCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
                 }
-                
+            }
+
+            // Step 1: Quick initial flash (bright white overlay)
+            float flashDuration = 0.08f; // Very quick flash
+            float elapsedTime = 0f;
+
+            // Create a gentler, less intense flash
+            if (transitionImage != null)
+            {
+                // Use a softer flash color - light gray instead of pure white
+                // and reduce the alpha for less intensity
+                Color flashColor = new Color(0.7f, 0.7f, 0.75f, 0.6f);
+                transitionImage.color = flashColor;
+
+                // Wait a very brief moment
+                yield return new WaitForSeconds(0.05f);
+
+                // Quickly fade the flash
+                while (elapsedTime < flashDuration)
+                {
+                    elapsedTime += Time.deltaTime;
+                    float t = Mathf.Clamp01(elapsedTime / flashDuration);
+
+                    // Use a smoother easing function
+                    float easedT = t * t * (3f - 2f * t); // Smoother ease
+
+                    // Fade the softer flash to black
+                    transitionImage.color = Color.Lerp(
+                        flashColor,
+                        new Color(0f, 0f, 0f, 1f),
+                        easedT
+                    );
+
+                    yield return null;
+                }
+
+                // Ensure we end at pure black after the flash fades
+                transitionImage.color = new Color(0f, 0f, 0f, 1f);
+            }
+
+            // Step 2: CRT warm-up phase
+            elapsedTime = 0f;
+
+            // Start with a much higher initial alpha and glitch intensity
+            float initialOverlayAlpha = 0.4f; // Initial stronger scanline effect
+            float initialGlitch = baseGlitchIntensity * 3f; // High initial glitch
+
+            // Set the initial high intensity
+            Color overlayColor = scanlineOverlay.color;
+            overlayColor.a = initialOverlayAlpha;
+            scanlineOverlay.color = overlayColor;
+
+            // Apply initial shader effects if material exists
+            if (shaderMaterial != null)
+            {
+                shaderMaterial.SetFloat("_GlitchIntensity", initialGlitch);
+                shaderMaterial.SetFloat("_Intensity", originalIntensity * 2.0f);
+                shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 1.5f);
+                shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 1.5f);
+            }
+
+            // Flicker phase - mimics old CRT flickering as it warms up
+            int flickerSteps = 3;
+            for (int i = 0; i < flickerSteps; i++)
+            {
+                // Dim down
+                float dimDuration = 0.05f;
+                elapsedTime = 0f;
+                while (elapsedTime < dimDuration)
+                {
+                    elapsedTime += Time.deltaTime;
+                    float dimT = Mathf.Clamp01(elapsedTime / dimDuration);
+
+                    overlayColor = scanlineOverlay.color;
+                    overlayColor.a = Mathf.Lerp(initialOverlayAlpha, initialOverlayAlpha * 0.3f, dimT);
+                    scanlineOverlay.color = overlayColor;
+
+                    yield return null;
+                }
+
+                // Brighten again
+                float brightenDuration = 0.07f;
+                elapsedTime = 0f;
+                while (elapsedTime < brightenDuration)
+                {
+                    elapsedTime += Time.deltaTime;
+                    float brightenT = Mathf.Clamp01(elapsedTime / brightenDuration);
+
+                    overlayColor = scanlineOverlay.color;
+                    overlayColor.a = Mathf.Lerp(initialOverlayAlpha * 0.3f, initialOverlayAlpha, brightenT);
+                    scanlineOverlay.color = overlayColor;
+
+                    yield return null;
+                }
+            }
+
+            // Step 3: Gradual stabilization to final value
+            float stabilizeDuration = 0.7f;
+            elapsedTime = 0f;
+
+            while (elapsedTime < stabilizeDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedTime / stabilizeDuration);
+
+                // Ease out function for more natural stabilizing
+                float easedT = 1 - (1 - t) * (1 - t);
+
+                // Update the overlay alpha - gradually reducing from initial high value
+                overlayColor = scanlineOverlay.color;
+                overlayColor.a = Mathf.Lerp(initialOverlayAlpha, targetAlpha, easedT);
+                scanlineOverlay.color = overlayColor;
+
+                // Gradually stabilize the glitch intensity
+                if (shaderMaterial != null)
+                {
+                    float currentGlitch = Mathf.Lerp(initialGlitch, baseGlitchIntensity, easedT);
+                    shaderMaterial.SetFloat("_GlitchIntensity", currentGlitch);
+
+                    // Return shader properties to normal
+                    if (t > 0.6f) // After 60% of the stabilization time
+                    {
+                        float restoreT = (t - 0.6f) / 0.4f; // Normalize remaining time
+
+                        // Restore original intensity gradually
+                        float currentIntensity = shaderMaterial.GetFloat("_Intensity");
+                        shaderMaterial.SetFloat("_Intensity", Mathf.Lerp(currentIntensity, originalIntensity, restoreT));
+
+                        // Restore original curvature gradually
+                        float currentCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
+                        float currentCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
+                        shaderMaterial.SetFloat("_CurvatureX", Mathf.Lerp(currentCurvatureX, originalCurvatureX, restoreT));
+                        shaderMaterial.SetFloat("_CurvatureY", Mathf.Lerp(currentCurvatureY, originalCurvatureY, restoreT));
+                    }
+                }
+
                 yield return null;
             }
-            
+
             // Ensure we end at exactly the target alpha
-            Color finalColor = scanlineOverlay.color;
-            finalColor.a = targetAlpha; // Set exact subtle alpha value
-            scanlineOverlay.color = finalColor;
+            overlayColor = scanlineOverlay.color;
+            overlayColor.a = targetAlpha;
+            scanlineOverlay.color = overlayColor;
+
+            // Make sure shader params are at correct values
+            if (shaderMaterial != null)
+            {
+                shaderMaterial.SetFloat("_GlitchIntensity", baseGlitchIntensity);
+                shaderMaterial.SetFloat("_Intensity", originalIntensity);
+                shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX);
+                shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY);
+            }
         }
         
         // Short delay after scanlines appear before text starts
@@ -403,7 +540,7 @@ public class NewGameAnimator : MonoBehaviour
         // Define boot messages with their types and colors
         var bootMessages = new (string message, Color color, float duration, bool hasLoadingBar, bool isError, bool instantLoad)[]
         {
-            ($"[BOOT] Purrine_AI-B1-08364142025", bootColor, 3f, false, false, false),
+            ($"[BOOT] Purrine_AI-B1-08364142020", bootColor, 3f, false, false, false),
             // System info messages in gray that load instantly like Windows CMD
             ($"[SYS] OS: {osInfo}", systemInfoColor, 0f, false, false, true),
             ($"[SYS] CPU: {cpuInfo}", systemInfoColor, 0f, false, false, true),
@@ -412,8 +549,8 @@ public class NewGameAnimator : MonoBehaviour
             ($"[SYS] DEVICE: {deviceName}", systemInfoColor, 0f, false, false, true),
             ($"[FILE] Path: {gamePath}", systemInfoColor, 0f, false, false, true),
             ($"[FILE] Instance: purrine_instance_{System.DateTime.Now.ToString("yyyyMMddHHmm")}.bin", systemInfoColor, 0f, false, false, true),
-            ($"[HASH] Verifying system integrity...", initColor, 0.8f, true, false, false),
-            ($"[SEC] Initializing security protocols...", initColor, 0.5f, true, false, false),
+            // ($"[HASH] Verifying system integrity...", initColor, 0.8f, true, false, false),
+            // ($"[SEC] Initializing security protocols...", initColor, 0.5f, true, false, false),
             ("[INIT] Loading neural networks...", initColor, 1.2f, true, false, false),
             ("[MEM] Allocating memory buffers...", initColor, 0.6f, true, false, true),
             ("[INIT] Calibrating sensors...", initColor, 0.8f, true, false, false),
@@ -430,14 +567,14 @@ public class NewGameAnimator : MonoBehaviour
             ("[LOG] Activating fallback protocol: OFFLINE_MODE", statusColor, 0.4f, false, false, true),
             ("[MEM] Verifying memory integrity...", initColor, 0.6f, true, false, false),
             ("[MEM] Available memory: 498.2TB/512TB", statusColor, 0.2f, false, false, true),
-            ("[MEM] Cache optimized", statusColor, 0.2f, false, false, true),
+            // ("[MEM] Cache optimized", statusColor, 0.2f, false, false, true),
             ("[INIT] Loading user preferences...", initColor, 0.5f, true, false, false),
-            ("[PERF] Graphics API: " + SystemInfo.graphicsDeviceType, systemInfoColor, 0f, false, false, true),
-            ("[PERF] Quality level: " + QualitySettings.GetQualityLevel(), systemInfoColor, 0f, false, false, true),
+            // ("[PERF] Graphics API: " + SystemInfo.graphicsDeviceType, systemInfoColor, 0f, false, false, true),
+            //("[PERF] Quality level: " + QualitySettings.GetQualityLevel(), systemInfoColor, 0f, false, false, true),
             ("[STATUS] Version: " + gameVersion + " (Build " + System.DateTime.Now.ToString("yyyyMMddHHmm") + ")", statusColor, 0.3f, false, false, true),
             ("[STATUS] All systems nominal", statusColor, 0.4f, false, false, false),
             ("[LOG] Timestamp: " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), systemInfoColor, 0f, false, false, true),
-            ("[READY] Loading complete!", readyColor, 0.6f, false, false, false)
+            ("[READY] Completed initialization for: PURRINE_AI-B1-08364142025", readyColor, 0.6f, false, false, false)
         };
 
         // Clear console text at the start and remove cursor
@@ -456,6 +593,8 @@ public class NewGameAnimator : MonoBehaviour
         consoleText.lineSpacing = -15f;  // Tighten line spacing for a terminal look
 
         yield return new WaitForSeconds(0.5f);  // Initial pause before starting
+        
+        AudioManager.SFX.Play("confirm_1", 0.3f);
 
         foreach (var (message, color, duration, hasLoadingBar, isError, instantLoad) in bootMessages)
         {
@@ -465,34 +604,35 @@ public class NewGameAnimator : MonoBehaviour
                 // Smoothly transition glitch intensity
                 float targetGlitch = isError ? errorGlitchIntensity : baseGlitchIntensity;
                 StartCoroutine(TransitionGlitchIntensity(targetGlitch, isError ? 0.2f : 0.5f));
-                
+
                 // Add more intense random glitch on errors
-                if (isError) {
+                if (isError)
+                {
                     TriggerGlitchEffect(errorGlitchIntensity * 1.5f, 0.15f);
                 }
             }
-            
+
             // Add prefix with caret
             consoleText.text += "> ";
-            
+
             // Convert color to hex for rich text
             string colorHex = ColorUtility.ToHtmlStringRGB(color);
-            
+
             if (instantLoad)
             {
                 // For instant loading messages, just add the whole text at once
                 consoleText.text += $"<color=#{colorHex}>{message}</color>\n";
-                
+
                 // Add to history
                 consoleHistory.Add("> " + $"<color=#{colorHex}>{message}</color>");
-                
+
                 // Trim if needed
                 if (consoleHistory.Count > maxConsoleLines)
                 {
                     consoleHistory.RemoveAt(0);
                     consoleText.text = string.Join("\n", consoleHistory) + "\n";
                 }
-                
+
                 // Short delay between instant messages for readability
                 yield return new WaitForSeconds(0.05f);
             }
@@ -500,24 +640,24 @@ public class NewGameAnimator : MonoBehaviour
             {
                 // Store the starting message text (for history tracking)
                 string messageText = "";
-                
+
                 // Type out each character for non-instant messages
                 for (int i = 0; i < message.Length; i++)
                 {
                     char c = message[i];
-                    
+
                     // Glitch effect chance (higher for error messages)
                     float localGlitchChance = isError ? glitchChance * 1.5f : glitchChance;
                     if (Random.value < localGlitchChance)
                     {
                         // Generate a glitch character
                         char glitchChar = (char)Random.Range(33, 126);
-                        
+
                         // Add glitch character in error color
                         string glitchText = $"<color=#{ColorUtility.ToHtmlStringRGB(errorColor)}>{glitchChar}</color>";
                         consoleText.text += glitchText;
                         yield return new WaitForSeconds(textTypeSpeed * 0.5f);
-                        
+
                         // Remove the glitch - safely
                         int txtLength = consoleText.text.Length;
                         if (txtLength >= glitchText.Length)
@@ -525,105 +665,122 @@ public class NewGameAnimator : MonoBehaviour
                             consoleText.text = consoleText.text.Substring(0, txtLength - glitchText.Length);
                         }
                     }
-                    
+
                     // Add the character with color
                     consoleText.text += $"<color=#{colorHex}>{c}</color>";
                     messageText += $"<color=#{colorHex}>{c}</color>";
-                    
+
+                    // Play typing sound for each character (except for error messages)
+                    if (!isError && !instantLoad && Random.value < 0.3f)
+                    {
+                        AudioManager.SFX.Play("bong_1", 0.2f);
+                    }
+
                     // Variable typing speed with occasional brief pauses
                     float typingVariation = Random.Range(0.8f, 1.2f);
-                    
+
+                    // Play sound effect when an error message is fully typed
+                    if (i == 7 && message.StartsWith("[ERROR]"))
+                    {
+                        AudioManager.SFX.Play("negative_2", 0.3f);
+                    }
+
                     // Occasional slight pause during typing (feels more like real typing)
-                    if (Random.value < 0.05f && !isError) {
+                    if (Random.value < 0.05f && !isError)
+                    {
                         yield return new WaitForSeconds(textTypeSpeed * 3f);
                     }
-                    else {
+                    else
+                    {
                         yield return new WaitForSeconds(textTypeSpeed * typingVariation);
                     }
-                    
+
                     // For errors, randomly trigger small shader glitches during typing
-                    if (isError && Random.value < 0.1f && shaderMaterial != null) {
+                    if (isError && Random.value < 0.1f && shaderMaterial != null)
+                    {
                         TriggerGlitchEffect(Random.Range(0.2f, 0.4f), 0.05f);
                     }
                 }
-                
+
                 // Add loading bar if needed
                 if (hasLoadingBar)
                 {
                     // Store original message for the completion display
                     string originalMessage = message;
-                    
+
                     // Add to history before adding the loading bar
                     consoleHistory.Add("> " + messageText);
-                    
+
                     // Add a line break and start the loading bar on a new line
                     consoleText.text += $"\n    <color=#{colorHex}>[";
                     int barLength = 20;
                     float totalElapsedTime = 0f;
                     float targetTime = duration * 1.5f; // Make loading longer overall
                     int currentBars = 0;
-                    
+
                     while (currentBars < barLength)
                     {
                         // Create variable loading speeds - sometimes fast, sometimes stalled
-                        float progressSpeed = Random.value < 0.2f ? 
+                        float progressSpeed = Random.value < 0.2f ?
                             Random.Range(0.05f, 0.1f) :  // Slower progress (20% chance)
                             Random.Range(0.2f, 0.4f);    // Normal progress (80% chance)
-                            
+
                         // Occasionally add multiple bars at once (progress spike)
-                        int barsToAdd = Random.value < 0.15f ? 
+                        int barsToAdd = Random.value < 0.15f ?
                             Random.Range(2, 4) : // Progress spike (15% chance)
                             1;                   // Normal progress (85% chance)
-                            
+
                         // Ensure we don't exceed the total
                         barsToAdd = Mathf.Min(barsToAdd, barLength - currentBars);
-                        
+
                         if (barsToAdd > 0)
                         {
                             string barSegment = new string('=', barsToAdd);
                             consoleText.text += barSegment;
                             currentBars += barsToAdd;
-                            
+
                             // Calculate progress percentage (0-100)
                             int percentage = Mathf.RoundToInt((float)currentBars / barLength * 100f);
-                            
+
                             // Update the completion percentage
                             string textWithoutPercentage = consoleText.text;
                             consoleText.text = $"{textWithoutPercentage}] {percentage}%";
-                            
+
                             // Wait based on progress speed
                             yield return new WaitForSeconds(progressSpeed);
-                            
+
                             // Random chance for a small glitch during loading
-                            if (Random.value < 0.08f && shaderMaterial != null) {
+                            if (Random.value < 0.08f && shaderMaterial != null)
+                            {
                                 TriggerGlitchEffect(Random.Range(0.1f, 0.2f), 0.05f);
                             }
-                            
+
                             // Remove the percentage for next update if not complete
                             if (currentBars < barLength)
                             {
                                 consoleText.text = textWithoutPercentage;
                             }
                         }
-                        
+
                         // Sometimes add a brief pause (stall)
                         if (Random.value < 0.1f && currentBars < barLength)
                         {
                             yield return new WaitForSeconds(Random.Range(0.2f, 0.5f));
-                            
+
                             // During stalls, sometimes show a system message
-                            if (Random.value < 0.3f) {
-                                string stall = currentBars > barLength / 2 ? 
-                                    $"\n      <color=#888888>...{(Random.value < 0.5f ? "validating" : "processing")}</color>" : 
+                            if (Random.value < 0.3f)
+                            {
+                                string stall = currentBars > barLength / 2 ?
+                                    $"\n      <color=#888888>...{(Random.value < 0.5f ? "validating" : "processing")}</color>" :
                                     $"\n      <color=#888888>...{(Random.value < 0.5f ? "collecting" : "analyzing")}</color>";
                                 consoleText.text += stall;
                                 yield return new WaitForSeconds(0.3f);
-                                
+
                                 // Remove the stall message
                                 consoleText.text = consoleText.text.Substring(0, consoleText.text.Length - stall.Length);
                             }
                         }
-                        
+
                         // Ensure we eventually complete even if slow
                         totalElapsedTime += Time.deltaTime + progressSpeed;
                         if (totalElapsedTime >= targetTime && currentBars < barLength)
@@ -634,7 +791,7 @@ public class NewGameAnimator : MonoBehaviour
                             currentBars = barLength;
                         }
                     }
-                    
+
                     // Ensure we show 100% at the end but preserving the original message
                     int endIndex = consoleText.text.LastIndexOf(']');
                     if (endIndex > 0 && endIndex < consoleText.text.Length)
@@ -645,10 +802,10 @@ public class NewGameAnimator : MonoBehaviour
                     {
                         consoleText.text += "] 100%</color>";
                     }
-                    
+
                     // Display a completion message alongside the original message in a cleaner way
                     consoleText.text += $"\n<color=#{ColorUtility.ToHtmlStringRGB(readyColor)}>[OK]</color> <color=#{colorHex}>{originalMessage}</color>";
-                    
+
                     // Add the completion message to history
                     consoleHistory.Add($"<color=#{ColorUtility.ToHtmlStringRGB(readyColor)}>[OK]</color> <color=#{colorHex}>{originalMessage}</color>");
                 }
@@ -657,10 +814,10 @@ public class NewGameAnimator : MonoBehaviour
                     // Add to history if no loading bar
                     consoleHistory.Add("> " + messageText);
                 }
-                
+
                 // Add line break
                 consoleText.text += "\n";
-                
+
                 // Trim if needed
                 if (consoleHistory.Count > maxConsoleLines)
                 {
@@ -673,16 +830,18 @@ public class NewGameAnimator : MonoBehaviour
             if (!instantLoad)
             {
                 float messageDelay = lineDelay + Random.Range(0f, 0.3f);
-                if (Random.value < 0.2f && !isError) {
+                if (Random.value < 0.2f && !isError)
+                {
                     // Show a brief "thinking" indicator
-                    string activity = Random.value < 0.5f ? 
-                        "<color=#666666>...</color>" : 
+                    string activity = Random.value < 0.5f ?
+                        "<color=#666666>...</color>" :
                         "<color=#666666>" + new string('.', Random.Range(1, 4)) + "</color>";
                     consoleText.text += activity;
                     yield return new WaitForSeconds(messageDelay);
                     consoleText.text = consoleText.text.Substring(0, consoleText.text.Length - activity.Length);
                 }
-                else {
+                else
+                {
                     yield return new WaitForSeconds(messageDelay);
                 }
             }
@@ -704,6 +863,8 @@ public class NewGameAnimator : MonoBehaviour
         // Enable scene transition
         canProceed = true;
         isTyping = false;  // End typing sequence
+
+        AudioManager.SFX.Play("glass_5", 0.5f);
         
         // Force first update of the press key visibility
         UpdatePressKeyVisibility();
