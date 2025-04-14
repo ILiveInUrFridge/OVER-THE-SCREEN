@@ -50,7 +50,7 @@ public static class DisplayUtils
     public static int GetCurrentMonitorIndex()
     {
         int targetMonitorIndex = 0; // Default to primary display
-        SwitchMonitorDropdown monitorDropdown = Object.FindAnyObjectByType<SwitchMonitorDropdown>();
+        SwitchMonitorDropdown monitorDropdown = Object.FindAnyObjectByType<SwitchMonitorDropdown>(); // shit code, but just leaving this as is for now
         if (monitorDropdown != null)
         {
             targetMonitorIndex = monitorDropdown.GetCurrentMonitorIndex();

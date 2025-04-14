@@ -38,7 +38,6 @@ public class FixGameWindowScaleBug
   
         if (gameViewWindow == null)
         {
-            Debug.LogError("GameView is null!");
             return;
         }
   

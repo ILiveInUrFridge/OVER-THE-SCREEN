@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Game.Audio;
 
-public class LoadingScreenController : MonoBehaviour
+public class LoadingScreenAnimator : MonoBehaviour
 {
     [Header("Stripe Scrolling")]
     public RectTransform stripeGroup;
