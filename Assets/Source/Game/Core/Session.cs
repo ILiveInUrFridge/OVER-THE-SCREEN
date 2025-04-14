@@ -35,7 +35,7 @@ namespace Game.Core
                 return;
             }
 
-            // TODO: Implement save functionality using JSON serialization
+            // TODO: Do some magic shit to save functionality using JSON serialization
             string json = JsonUtility.ToJson(this, true);
             string path = GetSavePath(saveSlot.Value);
             File.WriteAllText(path, json);
@@ -45,19 +45,19 @@ namespace Game.Core
 
         public static Session Load(int saveSlot)
         {
-            // TODO: Implement load functionality using JSON serialization
+            // TODO: Do some magic shit to load functionality using JSON serialization
             string path = GetSavePath(saveSlot);
             
             if (!File.Exists(path))
             {
-                this.LogWarning($"No save file found at slot {saveSlot}");
+                Debug.LogWarning($"[Session] No save file found at slot {saveSlot}");
                 return null;
             }
             
             string json = File.ReadAllText(path);
             Session session = JsonUtility.FromJson<Session>(json);
             
-            this.Log($"Game loaded from slot {saveSlot}");
+            Debug.Log($"[Session] Game loaded from slot {saveSlot}");
             return session;
         }
         

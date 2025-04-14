@@ -23,9 +23,49 @@ public class LanguageDropdown : MonoBehaviour
         { "en", "English" },
         { "ja", "日本語" },
         { "zh-Hans", "简体中文" },
+        { "zh-Hant", "繁體中文" },
         { "ko", "한국어" },
         { "es", "Español" }
     };
+
+    /// <summary>
+    ///     Method to load and apply saved language settings. Can be called from anywhere.
+    /// </summary>
+    public static void LoadSavedLanguage()
+    {
+        // Check for saved language preference
+        string savedLanguageCode = PlayerPrefs.GetString(PREFS_LANGUAGE_CODE, string.Empty);
+        if (string.IsNullOrEmpty(savedLanguageCode))
+            return;
+            
+        // Only proceed if localization system is initialized
+        if (!LocalizationSettings.InitializationOperation.IsDone)
+        {
+            LocalizationSettings.InitializationOperation.Completed += _ => ApplyLanguageCode(savedLanguageCode);
+        }
+        else
+        {
+            ApplyLanguageCode(savedLanguageCode);
+        }
+    }
+    
+    /// <summary>
+    ///     Apply specific language code to the localization system
+    /// </summary>
+    private static void ApplyLanguageCode(string languageCode)
+    {
+        var availableLocales = LocalizationSettings.AvailableLocales.Locales;
+        
+        // Find and apply the saved locale
+        for (int i = 0; i < availableLocales.Count; i++)
+        {
+            if (availableLocales[i].Identifier.Code == languageCode)
+            {
+                LocalizationSettings.SelectedLocale = availableLocales[i];
+                break;
+            }
+        }
+    }
 
     private void Start()
     {
@@ -84,10 +124,15 @@ public class LanguageDropdown : MonoBehaviour
             // Get the base language code
             string baseCode = localeCode.Contains("-") ? localeCode.Split('-')[0] : localeCode;
 
-            // Special case for Chinese Simplified
-            if (localeCode.StartsWith("zh-Hans"))
+            // Edge cases
+            switch (localeCode)
             {
-                baseCode = "zh-Hans";
+                case "zh-Hans":
+                    baseCode = "zh-Hans";
+                    break;
+                case "zh-Hant":
+                    baseCode = "zh-Hant";
+                    break;
             }
             
             // Get the native name, fallback to the locale name if not in our dictionary

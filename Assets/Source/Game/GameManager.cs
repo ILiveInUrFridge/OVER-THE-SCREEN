@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine.Localization.Settings;
 using Game.Core;
 using Game.Common;
 using Game.Characters;
@@ -32,6 +33,46 @@ namespace Game
 
             Instance = this;
             DontDestroyOnLoad(gameObject);
+
+            InitializeLocale();
+        }
+
+        /// <summary>
+        ///     Initialize the locale
+        /// </summary>
+        private void InitializeLocale()
+        {
+            // Initialize localization system
+            if (LocalizationSettings.HasSettings)
+            {
+                var initOp = LocalizationSettings.InitializationOperation;
+                
+                if (initOp.IsDone)
+                {
+                    LanguageDropdown.LoadSavedLanguage();
+                }
+                else
+                {
+                    LocalizationSettings.InitializationOperation.Completed += _ =>
+                    {
+                        LanguageDropdown.LoadSavedLanguage();
+                    };
+                }
+            }
+        }
+        
+        /// <summary>
+        ///     Exits the game
+        ///     
+        ///     Kinda no shit
+        /// </summary>
+        public void ExitGame()
+        {
+            #if UNITY_EDITOR
+                UnityEditor.EditorApplication.isPlaying = false;
+            #else
+                Application.Quit();
+            #endif
         }
         
         /// <summary>
@@ -46,12 +87,13 @@ namespace Game
             Purrine purrine = new Purrine(0, 0, 0, 0, 0, 0, 0, 0, Mood.NEUTRAL);
             Player player = new Player("Player", new List<Item>(), GPU.MEOWTX_1000);
             SexInfo sexInfo = new SexInfo(0, 0, 0, 0, 0, true);
-            
+
             GameInfo gameInfo = new GameInfo(0, 0, purrine, player, sexInfo);
+
             currentSession = new Session(saveSlot, gameInfo);
-            
+
             Debug.Log("New game started");
-            
+
             // Set up initial game state
             InitialGameSetup();
         }
@@ -123,8 +165,8 @@ namespace Game
         private void InitialGameSetup()
         {
             // Add starter items
-            Item starterItem = new Item(1, "Basic Computer", 0, "A basic computer for basic needs", 1);
-            currentSession.GameInfo.Player.Items.Add(starterItem);
+            // Item starterItem = new Item(1, "Basic Computer", 0, "A basic computer for basic needs", 1);
+            // currentSession.GameInfo.Player.Items.Add(starterItem);
             
             // Set initial action points
             currentSession.GameInfo.AddActionPoints(3);
