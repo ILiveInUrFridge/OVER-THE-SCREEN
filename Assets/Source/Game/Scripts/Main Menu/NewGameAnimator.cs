@@ -60,7 +60,6 @@ public class NewGameAnimator : MonoBehaviour
     private bool isCursorVisible = true;
     private float scanlineOffset = 0f;
     private string cursorChar = "_";
-    private bool isPressKeyVisible = true;
     private int pressKeyTextStartIndex = 0;
     private bool isTyping = false;  // Track when text is being typed
     private Material shaderMaterial;  // Reference to the shader material
@@ -230,28 +229,18 @@ public class NewGameAnimator : MonoBehaviour
                 StartCoroutine(TransitionSequence());
             }
             
-            // Initialize console text
+            // Initialize console text but keep it hidden
             if (consoleText != null)
             {
-                // Ensure the console text is active
-                consoleText.gameObject.SetActive(true);
+                consoleText.gameObject.SetActive(false); // Keep it hidden until after delay
                 consoleText.text = ""; // Clear any previous text
             }
             
-            // Initialize scanline overlay
+            // Initialize scanline overlay - but keep it deactivated until after the delay
             if (scanlineOverlay != null) 
             {
-                scanlineOverlay.gameObject.SetActive(true);
-                
-                // Reset the offset if material exists
-                if (scanlineOverlay.material != null)
-                {
-                    scanlineOverlay.material.SetFloat("_Offset", 0f);
-                }
+                scanlineOverlay.gameObject.SetActive(false);
             }
-
-            // Force activation of the components again (safeguard against potential hierarchy issues)
-            StartCoroutine(ForceActivateComponents());
         }
 
         // Get all images we want to animate
@@ -279,9 +268,101 @@ public class NewGameAnimator : MonoBehaviour
         // First fade to black
         yield return StartCoroutine(FadeToBlack());
         
-        // Then start the console text animation after screen is black
+        // Add additional delay after screen is black before "turning on" the computer
+        yield return new WaitForSeconds(2.0f);
+        
+        // Play boot sound here (placeholder comment for where to add your sound code)
+        // AudioManager.SFX.Play("computer_boot", 0.5f);
+        
+        // Now activate scanline overlay to simulate computer turning on, but with a fade
+        if (scanlineOverlay != null) 
+        {
+            // Activate the overlay but set alpha to 0
+            scanlineOverlay.gameObject.SetActive(true);
+            Color startColor = scanlineOverlay.color;
+            startColor.a = 0f;
+            scanlineOverlay.color = startColor;
+            
+            // Reset shader values if material exists
+            if (scanlineOverlay.material != null)
+            {
+                scanlineOverlay.material.SetFloat("_Offset", 0f);
+                shaderMaterial = scanlineOverlay.material;
+            }
+            
+            // Fade in the scanline overlay
+            float fadeDuration = 0.2f;
+            float elapsedTime = 0f;
+            
+            // Define a more subtle final alpha (15/255 ≈ 0.059)
+            float targetAlpha = 15f/255f;
+            
+            while (elapsedTime < fadeDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedTime / fadeDuration);
+                
+                // Apply easing for smoother fade-in
+                float easedT = Mathf.SmoothStep(0, 1, t);
+                
+                // Update the color
+                Color newColor = scanlineOverlay.color;
+                newColor.a = Mathf.Lerp(0f, targetAlpha, easedT);
+                scanlineOverlay.color = newColor;
+                
+                // Also gradually increase initial glitch intensity for a "warming up" effect
+                if (shaderMaterial != null)
+                {
+                    float initialGlitch = baseGlitchIntensity * 1.5f; // Start with higher glitch
+                    float targetGlitch = baseGlitchIntensity; // End with normal glitch level
+                    shaderMaterial.SetFloat("_GlitchIntensity", Mathf.Lerp(initialGlitch, targetGlitch, easedT));
+                }
+                
+                yield return null;
+            }
+            
+            // Ensure we end at exactly the target alpha
+            Color finalColor = scanlineOverlay.color;
+            finalColor.a = targetAlpha; // Set exact subtle alpha value
+            scanlineOverlay.color = finalColor;
+        }
+        
+        // Short delay after scanlines appear before text starts
+        yield return new WaitForSeconds(0.5f);
+        
+        // Activate console text with fade-in effect
         if (consoleText != null)
         {
+            consoleText.gameObject.SetActive(true);
+            
+            // Start with transparent text
+            Color textColor = consoleText.color;
+            float originalAlpha = textColor.a;
+            textColor.a = 0f;
+            consoleText.color = textColor;
+            
+            // Fade in the text
+            float textFadeDuration = 0.4f;
+            float elapsedTime = 0f;
+            
+            while (elapsedTime < textFadeDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedTime / textFadeDuration);
+                
+                // Update the color
+                Color newColor = consoleText.color;
+                newColor.a = Mathf.Lerp(0f, originalAlpha, t);
+                consoleText.color = newColor;
+                
+                yield return null;
+            }
+            
+            // Ensure we end with correct alpha
+            textColor.a = originalAlpha;
+            consoleText.color = textColor;
+            
+            // Start console sequence after fade-in is complete
             StartCoroutine(PlayConsoleSequence());
         }
     }
@@ -689,15 +770,8 @@ public class NewGameAnimator : MonoBehaviour
         // Wait for a frame to let initial setup complete
         yield return null;
         
-        if (consoleText != null && !consoleText.gameObject.activeSelf)
-        {
-            consoleText.gameObject.SetActive(true);
-        }
-        
-        if (scanlineOverlay != null && !scanlineOverlay.gameObject.activeSelf)
-        {
-            scanlineOverlay.gameObject.SetActive(true);
-        }
+        // Only force activation if they should be active at this point
+        // Don't force scanlines or console text as they should appear with delay
     }
 
     // Add this helper method to trim the console text when it gets too long
