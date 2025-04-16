@@ -367,6 +367,9 @@ public class NewGameAnimator : MonoBehaviour
                 shaderMaterial.SetFloat("_Intensity", originalIntensity * 2.0f);
                 shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 1.5f);
                 shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 1.5f);
+
+                // Play random glitch sound
+                PlayRandomGlitchSound(0.7f);
             }
 
             // Flicker phase - mimics old CRT flickering as it warms up
@@ -386,6 +389,12 @@ public class NewGameAnimator : MonoBehaviour
                     scanlineOverlay.color = overlayColor;
 
                     yield return null;
+                }
+
+                // Play random glitch sound at the end of the dim phase
+                if (Random.value < 0.7f)
+                {
+                    PlayRandomGlitchSound(0.5f);
                 }
 
                 // Brighten again
@@ -901,6 +910,12 @@ public class NewGameAnimator : MonoBehaviour
         if (shaderMaterial != null)
         {
             StartCoroutine(GlitchEffectSequence(intensity, duration));
+            
+            // Add chance to play a glitch sound when triggering a visual glitch
+            if (Random.value < 0.7f)
+            {
+                PlayRandomGlitchSound(intensity / 2.0f);
+            }
         }
     }
     
@@ -979,6 +994,9 @@ public class NewGameAnimator : MonoBehaviour
         // Fade out computer hum sound
         AudioManager.Music.FadeOutMusic(1.0f);
         
+        // Initial glitch sound
+        PlayRandomGlitchSound(0.6f);
+        
         // Let the sound play for a moment before effects start
         yield return new WaitForSeconds(0.1f);
         
@@ -1001,8 +1019,8 @@ public class NewGameAnimator : MonoBehaviour
             yield return new WaitForSeconds(0.15f);
         }
 
-        // Add glitch lines that appear during the shutdown
-        StartCoroutine(CreateGlitchLines(transitionImage.transform, 4, 1.5f));
+        // Add glitch lines that appear during the shutdown - but in a more organic way
+        StartCoroutine(CreateGlitchLines(transitionImage.transform, 1.5f));
         
         // CRT collapse effect
         if (scanlineOverlay != null)
@@ -1136,7 +1154,8 @@ public class NewGameAnimator : MonoBehaviour
     }
 
     // Create thin white lines that appear and disappear randomly to simulate monitor glitching
-    private IEnumerator CreateGlitchLines(Transform parent, int lineCount, float duration)
+    // in a more natural, less constant way
+    private IEnumerator CreateGlitchLines(Transform parent, float duration)
     {
         // List to track created lines for easy cleanup
         List<GameObject> glitchLines = new List<GameObject>();
@@ -1146,122 +1165,341 @@ public class NewGameAnimator : MonoBehaviour
         float screenHeight = canvasRect.rect.height;
         float screenWidth = canvasRect.rect.width;
         
-        // Create a few thin lines at different positions
-        for (int i = 0; i < lineCount; i++)
+        // Multiple phases of the glitch effect
+        float totalTime = 0;
+        
+        // Define the glitch intensity over time
+        // 0-0.3: Initial subtle glitches
+        // 0.3-0.7: Increasing intensity
+        // 0.7-1.0: Peak intensity with bursts
+        // 1.0-1.5: Gradual fadeout with occasional strong glitches
+        
+        while (totalTime < duration)
         {
-            // Create line with random vertical position
-            GameObject lineObj = new GameObject("GlitchLine_" + i);
-            lineObj.transform.SetParent(parent, false);
-            Image lineImage = lineObj.AddComponent<Image>();
+            totalTime += Time.deltaTime;
+            float normalizedTime = totalTime / duration; // 0 to 1 over the course of the effect
             
-            // Subtle white with some transparency
-            lineImage.color = new Color(1f, 1f, 1f, Random.Range(0.6f, 0.9f));
+            // Determine the current phase
+            float baseChance = 0;
+            float burstChance = 0;
             
-            RectTransform lineRect = lineImage.GetComponent<RectTransform>();
-            
-            // Horizontal line spanning a portion of the width
-            lineRect.anchorMin = new Vector2(0, 0);
-            lineRect.anchorMax = new Vector2(1, 0);
-            
-            // Position randomly on screen
-            float yPos = Random.Range(0.1f, 0.9f);
-            lineRect.anchoredPosition = new Vector2(0, screenHeight * yPos);
-            
-            // Very thin lines (1-2 pixels)
-            lineRect.sizeDelta = new Vector2(0, Random.Range(1f, 2f));
-            
-            // Random width (some lines go all the way across, some don't)
-            if (Random.value > 0.5f)
+            // Phase 1: Initial subtle glitches (0-20% of duration)
+            if (normalizedTime < 0.2f)
             {
-                // Full width
-                lineRect.offsetMin = new Vector2(0, lineRect.offsetMin.y);
-                lineRect.offsetMax = new Vector2(0, lineRect.offsetMax.y);
+                baseChance = 0.01f; // Very rare glitches
+                burstChance = 0.005f; // Almost no bursts
+                
+                // Occasionally create a single line for a brief moment
+                if (Random.value < baseChance && glitchLines.Count < 1)
+                {
+                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.3f);
+                }
             }
+            // Phase 2: Building up (20-50% of duration)
+            else if (normalizedTime < 0.5f)
+            {
+                // Gradually increase chance as we progress
+                float progress = (normalizedTime - 0.2f) / 0.3f; // 0 to 1 within this phase
+                baseChance = Mathf.Lerp(0.01f, 0.05f, progress);
+                burstChance = Mathf.Lerp(0.005f, 0.02f, progress);
+                
+                // Create occasional lines
+                if (Random.value < baseChance && glitchLines.Count < 3)
+                {
+                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.5f);
+                }
+                
+                // Occasionally create a burst of 2-3 lines
+                if (Random.value < burstChance)
+                {
+                    int burstSize = Random.Range(2, 4);
+                    
+                    // Chance to play a glitch sound for the burst
+                    if (Random.value < 0.3f)
+                    {
+                        PlayRandomGlitchSound(0.4f);
+                    }
+                    
+                    for (int i = 0; i < burstSize; i++)
+                    {
+                        CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.4f);
+                        yield return new WaitForSeconds(0.02f); // Slight delay between lines in burst
+                    }
+                }
+            }
+            // Phase 3: Major glitching (50-70% of duration)
+            else if (normalizedTime < 0.7f)
+            {
+                baseChance = 0.08f; // Frequent individual glitches
+                burstChance = 0.04f; // More common bursts
+                
+                // Create regular lines
+                if (Random.value < baseChance && glitchLines.Count < 5)
+                {
+                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.7f);
+                }
+                
+                // Create bursts of 2-4 lines
+                if (Random.value < burstChance)
+                {
+                    int burstSize = Random.Range(2, 5);
+                    
+                    // Higher chance to play a glitch sound for the burst
+                    if (Random.value < 0.5f)
+                    {
+                        PlayRandomGlitchSound(0.5f);
+                    }
+                    
+                    for (int i = 0; i < burstSize; i++)
+                    {
+                        CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.6f);
+                        yield return new WaitForSeconds(0.01f); // Quick burst
+                    }
+                }
+                
+                // Occasionally trigger more intense shader glitch during this phase
+                if (Random.value < 0.03f && shaderMaterial != null)
+                {
+                    TriggerGlitchEffect(Random.Range(0.5f, 1.0f), 0.1f);
+                }
+            }
+            // Phase 4: Peak intensity (70-85% of duration)
+            else if (normalizedTime < 0.85f)
+            {
+                baseChance = 0.1f; // Very frequent individual glitches
+                burstChance = 0.06f; // Common bursts
+                
+                // Create regular lines
+                if (Random.value < baseChance && glitchLines.Count < 8)
+                {
+                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.8f);
+                }
+                
+                // Create larger bursts of 3-6 lines
+                if (Random.value < burstChance)
+                {
+                    int burstSize = Random.Range(3, 7);
+                    
+                    // Almost always play a glitch sound for the burst at peak intensity
+                    if (Random.value < 0.8f)
+                    {
+                        PlayRandomGlitchSound(0.7f);
+                    }
+                    
+                    for (int i = 0; i < burstSize; i++)
+                    {
+                        CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.7f);
+                        yield return new WaitForSeconds(0.01f); // Quick burst
+                    }
+                }
+            }
+            // Phase 5: Fadeout with occasional strong bursts (85-100% of duration)
             else
             {
-                // Partial width
-                float leftOffset = Random.Range(0, screenWidth * 0.3f);
-                float rightOffset = Random.Range(0, screenWidth * 0.3f);
-                lineRect.offsetMin = new Vector2(leftOffset, lineRect.offsetMin.y);
-                lineRect.offsetMax = new Vector2(-rightOffset, lineRect.offsetMax.y);
+                float progress = (normalizedTime - 0.85f) / 0.15f; // 0 to 1 within this phase
+                baseChance = Mathf.Lerp(0.1f, 0.02f, progress); // Decreasing chance
+                burstChance = Mathf.Lerp(0.06f, 0.01f, progress); // Decreasing bursts
+                
+                // Still create individual lines, but less often
+                if (Random.value < baseChance && glitchLines.Count < 6)
+                {
+                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.6f);
+                }
+                
+                // Occasionally still have a strong burst
+                if (Random.value < burstChance)
+                {
+                    int burstSize = Random.Range(4, 8); // Can be larger bursts
+                    
+                    // Chance of one final big glitch sound
+                    if (Random.value < 0.4f)
+                    {
+                        PlayRandomGlitchSound(0.8f);
+                    }
+                    
+                    for (int i = 0; i < burstSize; i++)
+                    {
+                        CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.5f);
+                        yield return new WaitForSeconds(0.01f);
+                    }
+                    
+                    // Chance of one final major glitch/flash
+                    if (Random.value < 0.3f && shaderMaterial != null)
+                    {
+                        TriggerGlitchEffect(1.2f, 0.15f);
+                    }
+                }
             }
             
-            // Add to list for tracking
-            glitchLines.Add(lineObj);
+            // Update existing lines
+            UpdateGlitchLines(glitchLines, normalizedTime);
+            
+            // Clean up faded/expired lines
+            CleanupGlitchLines(glitchLines);
+            
+            yield return null;
         }
         
-        // Let the lines flicker for the duration
-        float flickerTime = 0;
-        while (flickerTime < duration)
+        // Final cleanup
+        foreach (GameObject line in glitchLines.ToArray())
         {
-            flickerTime += Time.deltaTime;
+            Destroy(line);
+        }
+        glitchLines.Clear();
+    }
+    
+    // Helper method to create a single glitch line
+    private void CreateGlitchLine(Transform parent, List<GameObject> linesList, float screenHeight, float screenWidth, float maxLifetime)
+    {
+        GameObject lineObj = new GameObject("GlitchLine_" + Random.Range(0, 1000));
+        lineObj.transform.SetParent(parent, false);
+        Image lineImage = lineObj.AddComponent<Image>();
+        
+        // Store the lifetime in a component we can check later
+        GlitchLineData data = lineObj.AddComponent<GlitchLineData>();
+        data.CreationTime = Time.time;
+        data.Lifetime = Random.Range(0.1f, maxLifetime);
+        
+        // Randomize opacity based on intensity (more intense = more opaque)
+        lineImage.color = new Color(1f, 1f, 1f, Random.Range(0.5f, 0.95f));
+        
+        RectTransform lineRect = lineImage.GetComponent<RectTransform>();
+        
+        // Horizontal line spanning a portion of the width
+        lineRect.anchorMin = new Vector2(0, 0);
+        lineRect.anchorMax = new Vector2(1, 0);
+        
+        // Position randomly on screen
+        float yPos = Random.Range(0.1f, 0.9f);
+        lineRect.anchoredPosition = new Vector2(0, screenHeight * yPos);
+        
+        // Very thin lines (1-3 pixels)
+        lineRect.sizeDelta = new Vector2(0, Random.Range(1f, 3f));
+        
+        // Random width 
+        float leftOffset = Random.value < 0.3f ? 0 : Random.Range(0, screenWidth * 0.4f);
+        float rightOffset = Random.value < 0.3f ? 0 : Random.Range(0, screenWidth * 0.4f);
+        lineRect.offsetMin = new Vector2(leftOffset, lineRect.offsetMin.y);
+        lineRect.offsetMax = new Vector2(-rightOffset, lineRect.offsetMax.y);
+        
+        // Sometimes play a glitch sound when creating a line
+        if (Random.value < 0.1f)
+        {
+            PlayRandomGlitchSound(0.3f);
+        }
+        
+        // Add to list for tracking
+        linesList.Add(lineObj);
+    }
+    
+    // Helper method to update existing glitch lines
+    private void UpdateGlitchLines(List<GameObject> linesList, float normalizedTime)
+    {
+        foreach (GameObject line in linesList.ToArray())
+        {
+            if (line == null) continue;
             
-            // Randomly toggle visibility of some lines
-            foreach (GameObject line in glitchLines)
+            // Get the data component
+            GlitchLineData data = line.GetComponent<GlitchLineData>();
+            if (data == null) continue;
+            
+            // Calculate age
+            float age = Time.time - data.CreationTime;
+            float lifetimeProgress = age / data.Lifetime;
+            
+            if (lifetimeProgress < 1.0f)
             {
-                if (Random.value < 0.15f) // 15% chance per frame to toggle
+                // Different behavior at different stages of line lifetime
+                if (lifetimeProgress < 0.1f)
+                {
+                    // Quick fade in
+                    Image img = line.GetComponent<Image>();
+                    if (img != null)
+                    {
+                        Color c = img.color;
+                        float targetAlpha = c.a; // Store original target
+                        c.a = Mathf.Lerp(0, targetAlpha, lifetimeProgress / 0.1f);
+                        img.color = c;
+                    }
+                }
+                else if (lifetimeProgress > 0.7f)
+                {
+                    // Fade out at end of life
+                    Image img = line.GetComponent<Image>();
+                    if (img != null)
+                    {
+                        Color c = img.color;
+                        float startAlpha = c.a; // Use current alpha as base
+                        c.a = Mathf.Lerp(startAlpha, 0, (lifetimeProgress - 0.7f) / 0.3f);
+                        img.color = c;
+                    }
+                }
+                
+                // Random flickering
+                if (Random.value < 0.1f)
                 {
                     line.SetActive(!line.activeSelf);
                 }
                 
-                // Occasionally shift position slightly
-                if (Random.value < 0.08f) // 8% chance per frame
+                // Move lines occasionally, more likely during intense phases
+                float moveChance = normalizedTime < 0.7f ? 0.05f : 0.1f;
+                if (Random.value < moveChance)
                 {
                     RectTransform rt = line.GetComponent<RectTransform>();
-                    Vector2 currentPos = rt.anchoredPosition;
-                    rt.anchoredPosition = new Vector2(currentPos.x, currentPos.y + Random.Range(-5f, 5f));
-                }
-                
-                // Sometimes create new lines as the effect continues
-                if (Random.value < 0.01f && glitchLines.Count < 10) // 1% chance to add a new line, max 10
-                {
-                    GameObject newLineObj = new GameObject("GlitchLine_extra");
-                    newLineObj.transform.SetParent(parent, false);
-                    Image newLineImage = newLineObj.AddComponent<Image>();
-                    newLineImage.color = new Color(1f, 1f, 1f, Random.Range(0.6f, 0.9f));
-                    
-                    RectTransform newLineRect = newLineImage.GetComponent<RectTransform>();
-                    newLineRect.anchorMin = new Vector2(0, 0);
-                    newLineRect.anchorMax = new Vector2(1, 0);
-                    
-                    float newYPos = Random.Range(0.1f, 0.9f);
-                    newLineRect.anchoredPosition = new Vector2(0, screenHeight * newYPos);
-                    newLineRect.sizeDelta = new Vector2(0, Random.Range(1f, 3f));
-                    
-                    glitchLines.Add(newLineObj);
+                    if (rt != null)
+                    {
+                        Vector2 currentPos = rt.anchoredPosition;
+                        rt.anchoredPosition = new Vector2(currentPos.x, currentPos.y + Random.Range(-4f, 4f));
+                    }
                 }
             }
-            
-            yield return null;
         }
-        
-        // Fade out all lines
-        float fadeTime = 0;
-        float fadeOutDuration = 0.3f;
-        
-        while (fadeTime < fadeOutDuration)
+    }
+    
+    // Helper method to clean up faded or expired lines
+    private void CleanupGlitchLines(List<GameObject> linesList)
+    {
+        for (int i = linesList.Count - 1; i >= 0; i--)
         {
-            fadeTime += Time.deltaTime;
-            float t = fadeTime / fadeOutDuration;
+            if (i >= linesList.Count) continue; // Safety check
             
-            foreach (GameObject line in glitchLines)
+            GameObject line = linesList[i];
+            if (line == null)
             {
-                if (line.activeSelf)
-                {
-                    Image img = line.GetComponent<Image>();
-                    Color color = img.color;
-                    color.a = Mathf.Lerp(color.a, 0, t);
-                    img.color = color;
-                }
+                linesList.RemoveAt(i);
+                continue;
             }
             
-            yield return null;
+            GlitchLineData data = line.GetComponent<GlitchLineData>();
+            if (data == null)
+            {
+                linesList.RemoveAt(i);
+                Destroy(line);
+                continue;
+            }
+            
+            // Remove if lifetime exceeded
+            float age = Time.time - data.CreationTime;
+            if (age > data.Lifetime)
+            {
+                linesList.RemoveAt(i);
+                Destroy(line);
+            }
         }
-        
-        // Clean up
-        foreach (GameObject line in glitchLines)
-        {
-            Destroy(line);
-        }
+    }
+    
+    // Simple class to store glitch line data
+    private class GlitchLineData : MonoBehaviour
+    {
+        public float CreationTime;
+        public float Lifetime;
+    }
+
+    // Helper method to play a random glitch sound effect
+    private void PlayRandomGlitchSound(float volume = 0.5f)
+    {
+        int soundNumber = Random.Range(1, 5); // Random number between 1 and 4
+        string soundName = "glitch_" + soundNumber;
+        AudioManager.SFX.Play(soundName, volume);
     }
 }
