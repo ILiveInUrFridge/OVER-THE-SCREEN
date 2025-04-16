@@ -1000,6 +1000,9 @@ public class NewGameAnimator : MonoBehaviour
             // Wait briefly with high distortion
             yield return new WaitForSeconds(0.15f);
         }
+
+        // Add glitch lines that appear during the shutdown
+        StartCoroutine(CreateGlitchLines(transitionImage.transform, 4, 1.5f));
         
         // CRT collapse effect
         if (scanlineOverlay != null)
@@ -1130,5 +1133,135 @@ public class NewGameAnimator : MonoBehaviour
         
         // Now load the next scene
         SceneManager.LoadScene("IntroAndTutorial");
+    }
+
+    // Create thin white lines that appear and disappear randomly to simulate monitor glitching
+    private IEnumerator CreateGlitchLines(Transform parent, int lineCount, float duration)
+    {
+        // List to track created lines for easy cleanup
+        List<GameObject> glitchLines = new List<GameObject>();
+        
+        // Get canvas dimensions for positioning
+        RectTransform canvasRect = parent.GetComponent<RectTransform>();
+        float screenHeight = canvasRect.rect.height;
+        float screenWidth = canvasRect.rect.width;
+        
+        // Create a few thin lines at different positions
+        for (int i = 0; i < lineCount; i++)
+        {
+            // Create line with random vertical position
+            GameObject lineObj = new GameObject("GlitchLine_" + i);
+            lineObj.transform.SetParent(parent, false);
+            Image lineImage = lineObj.AddComponent<Image>();
+            
+            // Subtle white with some transparency
+            lineImage.color = new Color(1f, 1f, 1f, Random.Range(0.6f, 0.9f));
+            
+            RectTransform lineRect = lineImage.GetComponent<RectTransform>();
+            
+            // Horizontal line spanning a portion of the width
+            lineRect.anchorMin = new Vector2(0, 0);
+            lineRect.anchorMax = new Vector2(1, 0);
+            
+            // Position randomly on screen
+            float yPos = Random.Range(0.1f, 0.9f);
+            lineRect.anchoredPosition = new Vector2(0, screenHeight * yPos);
+            
+            // Very thin lines (1-2 pixels)
+            lineRect.sizeDelta = new Vector2(0, Random.Range(1f, 2f));
+            
+            // Random width (some lines go all the way across, some don't)
+            if (Random.value > 0.5f)
+            {
+                // Full width
+                lineRect.offsetMin = new Vector2(0, lineRect.offsetMin.y);
+                lineRect.offsetMax = new Vector2(0, lineRect.offsetMax.y);
+            }
+            else
+            {
+                // Partial width
+                float leftOffset = Random.Range(0, screenWidth * 0.3f);
+                float rightOffset = Random.Range(0, screenWidth * 0.3f);
+                lineRect.offsetMin = new Vector2(leftOffset, lineRect.offsetMin.y);
+                lineRect.offsetMax = new Vector2(-rightOffset, lineRect.offsetMax.y);
+            }
+            
+            // Add to list for tracking
+            glitchLines.Add(lineObj);
+        }
+        
+        // Let the lines flicker for the duration
+        float flickerTime = 0;
+        while (flickerTime < duration)
+        {
+            flickerTime += Time.deltaTime;
+            
+            // Randomly toggle visibility of some lines
+            foreach (GameObject line in glitchLines)
+            {
+                if (Random.value < 0.15f) // 15% chance per frame to toggle
+                {
+                    line.SetActive(!line.activeSelf);
+                }
+                
+                // Occasionally shift position slightly
+                if (Random.value < 0.08f) // 8% chance per frame
+                {
+                    RectTransform rt = line.GetComponent<RectTransform>();
+                    Vector2 currentPos = rt.anchoredPosition;
+                    rt.anchoredPosition = new Vector2(currentPos.x, currentPos.y + Random.Range(-5f, 5f));
+                }
+                
+                // Sometimes create new lines as the effect continues
+                if (Random.value < 0.01f && glitchLines.Count < 10) // 1% chance to add a new line, max 10
+                {
+                    GameObject newLineObj = new GameObject("GlitchLine_extra");
+                    newLineObj.transform.SetParent(parent, false);
+                    Image newLineImage = newLineObj.AddComponent<Image>();
+                    newLineImage.color = new Color(1f, 1f, 1f, Random.Range(0.6f, 0.9f));
+                    
+                    RectTransform newLineRect = newLineImage.GetComponent<RectTransform>();
+                    newLineRect.anchorMin = new Vector2(0, 0);
+                    newLineRect.anchorMax = new Vector2(1, 0);
+                    
+                    float newYPos = Random.Range(0.1f, 0.9f);
+                    newLineRect.anchoredPosition = new Vector2(0, screenHeight * newYPos);
+                    newLineRect.sizeDelta = new Vector2(0, Random.Range(1f, 3f));
+                    
+                    glitchLines.Add(newLineObj);
+                }
+            }
+            
+            yield return null;
+        }
+        
+        // Fade out all lines
+        float fadeTime = 0;
+        float fadeOutDuration = 0.3f;
+        
+        while (fadeTime < fadeOutDuration)
+        {
+            fadeTime += Time.deltaTime;
+            float t = fadeTime / fadeOutDuration;
+            
+            foreach (GameObject line in glitchLines)
+            {
+                if (line.activeSelf)
+                {
+                    Image img = line.GetComponent<Image>();
+                    Color color = img.color;
+                    color.a = Mathf.Lerp(color.a, 0, t);
+                    img.color = color;
+                }
+            }
+            
+            yield return null;
+        }
+        
+        // Clean up
+        foreach (GameObject line in glitchLines)
+        {
+            Destroy(line);
+        }
     }
 }
