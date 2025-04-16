@@ -122,8 +122,8 @@ public class NewGameAnimator : MonoBehaviour
     {
         if (canProceed && Input.anyKeyDown)
         {
-            // Load the next scene
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+            // Start power-off sequence instead of loading scene directly
+            StartCoroutine(MonitorPowerOffSequence());
         }
 
         // Update scanline effect
@@ -209,7 +209,7 @@ public class NewGameAnimator : MonoBehaviour
 
     public void PlayTransition()
     {
-        AudioManager.Music.FadeOutMusic(fadeDuration + 1);
+        AudioManager.Music.FadeOutMusic(fadeDuration + 2);
         AudioManager.SFX.Play("start_new_game", 0.2f);
 
         // Activate transition screen and start fade to black
@@ -270,9 +270,7 @@ public class NewGameAnimator : MonoBehaviour
         yield return StartCoroutine(FadeToBlack());
         
         // Add additional delay after screen is black before "turning on" the computer
-        yield return new WaitForSeconds(2.0f);
-        
-        initialMenu.SetActive(false); // disable main menu
+        yield return new WaitForSeconds(5.0f);
 
         AudioManager.SFX.Play("switch_6", 0.1f);
 
@@ -520,6 +518,8 @@ public class NewGameAnimator : MonoBehaviour
 
         // Ensure we end at exactly 100% opacity
         transitionImage.color = endColor;
+
+        initialMenu.SetActive(false); // disable main menu
     }
 
     private IEnumerator PlayConsoleSequence()
@@ -925,16 +925,6 @@ public class NewGameAnimator : MonoBehaviour
         }
     }
 
-    // This coroutine will try to force activate the components after a brief delay
-    private IEnumerator ForceActivateComponents()
-    {
-        // Wait for a frame to let initial setup complete
-        yield return null;
-        
-        // Only force activation if they should be active at this point
-        // Don't force scanlines or console text as they should appear with delay
-    }
-
     // Add this helper method to trim the console text when it gets too long
     private void TrimConsoleText()
     {
@@ -975,5 +965,170 @@ public class NewGameAnimator : MonoBehaviour
             // Update the console text
             consoleText.text = newText;
         }
+    }
+
+    // Monitor power-off effect before scene transition
+    private IEnumerator MonitorPowerOffSequence()
+    {
+        // Disable input during transition
+        canProceed = false;
+        
+        // Play switch-off sound
+        AudioManager.SFX.Play("switch_6", 0.2f);
+        
+        // Fade out computer hum sound
+        AudioManager.Music.FadeOutMusic(1.0f);
+        
+        // Let the sound play for a moment before effects start
+        yield return new WaitForSeconds(0.1f);
+        
+        // Increase CRT glitch effects
+        if (shaderMaterial != null)
+        {
+            // Store original values
+            float originalGlitchIntensity = shaderMaterial.GetFloat("_GlitchIntensity");
+            float originalGlitchSpeed = shaderMaterial.GetFloat("_GlitchSpeed");
+            float originalCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
+            float originalCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
+            
+            // Increase values for shutdown effect
+            shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 4f);
+            shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 3f);
+            shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 2f);
+            shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 2f);
+            
+            // Wait briefly with high distortion
+            yield return new WaitForSeconds(0.15f);
+        }
+        
+        // CRT collapse effect
+        if (scanlineOverlay != null)
+        {
+            // Final intense distortion flash
+            TriggerGlitchEffect(1.0f, 0.1f);
+            
+            // Quickly brighten the scanlines
+            Color overlayColor = scanlineOverlay.color;
+            float originalAlpha = overlayColor.a;
+            float elapsedTime = 0f;
+            float flashDuration = 0.1f;
+            
+            while (elapsedTime < flashDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedTime / flashDuration);
+                
+                overlayColor.a = Mathf.Lerp(originalAlpha, 0.4f, t);
+                scanlineOverlay.color = overlayColor;
+                yield return null;
+            }
+        }
+        
+        // Horizontal line collapse (classic CRT power off)
+        if (consoleText != null && transitionImage != null)
+        {
+            // Hide the console text
+            consoleText.gameObject.SetActive(false);
+            
+            // Create the shrinking white line effect
+            RectTransform canvasRect = transitionImage.GetComponent<RectTransform>();
+            float screenHeight = canvasRect.rect.height;
+            
+            // Create a white line
+            GameObject lineObj = new GameObject("PowerOffLine");
+            lineObj.transform.SetParent(transitionImage.transform, false);
+            Image lineImage = lineObj.AddComponent<Image>();
+            lineImage.color = Color.white;
+            
+            // Set up the line's rect transform
+            RectTransform lineRect = lineImage.GetComponent<RectTransform>();
+            lineRect.anchorMin = new Vector2(0, 0.5f);
+            lineRect.anchorMax = new Vector2(1, 0.5f);
+            lineRect.sizeDelta = new Vector2(0, screenHeight * 0.1f); // Start at 10% of screen height
+            
+            // Quick brightness flash before collapse
+            float elapsedTime = 0f;
+            float flashDuration = 0.05f;
+            
+            while (elapsedTime < flashDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedTime / flashDuration);
+                
+                lineRect.sizeDelta = new Vector2(0, Mathf.Lerp(screenHeight * 0.1f, screenHeight, t));
+                yield return null;
+            }
+            
+            // Set to full height
+            lineRect.sizeDelta = new Vector2(0, screenHeight);
+            
+            // Brief pause at full brightness
+            yield return new WaitForSeconds(0.05f);
+            
+            // Collapse to a thin line
+            elapsedTime = 0f;
+            float collapseDuration = 0.2f;
+            
+            while (elapsedTime < collapseDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedTime / collapseDuration);
+                // Use easing for more natural collapse
+                float easedT = t * t;
+                
+                lineRect.sizeDelta = new Vector2(0, Mathf.Lerp(screenHeight, 2f, easedT));
+                yield return null;
+            }
+            
+            // Set to final thin line
+            lineRect.sizeDelta = new Vector2(0, 2f);
+            
+            // Final flicker and fade out
+            elapsedTime = 0f;
+            float fadeOutDuration = 0.2f;
+            
+            while (elapsedTime < fadeOutDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = Mathf.Clamp01(elapsedTime / fadeOutDuration);
+                
+                // Add slight flicker
+                if (Random.value < 0.3f)
+                {
+                    lineImage.enabled = !lineImage.enabled;
+                }
+                
+                // Fade out
+                Color lineColor = lineImage.color;
+                lineColor.a = Mathf.Lerp(1f, 0f, t);
+                lineImage.color = lineColor;
+                
+                yield return null;
+            }
+            
+            // Make sure line is gone
+            Destroy(lineObj);
+            
+            // Brief pause before final blackout
+            yield return new WaitForSeconds(0.1f);
+            
+            // Final complete blackout
+            if (transitionImage != null)
+            {
+                transitionImage.color = Color.black;
+            }
+        }
+        
+        // Make sure everything is disabled before scene transition
+        if (scanlineOverlay != null)
+        {
+            scanlineOverlay.gameObject.SetActive(false);
+        }
+        
+        // Brief pause in darkness
+        yield return new WaitForSeconds(1.0f);
+        
+        // Now load the next scene
+        SceneManager.LoadScene("IntroAndTutorial");
     }
 }
