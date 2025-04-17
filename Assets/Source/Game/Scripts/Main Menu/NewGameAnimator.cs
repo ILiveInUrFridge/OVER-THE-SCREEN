@@ -1094,7 +1094,15 @@ public class NewGameAnimator : MonoBehaviour
             float originalCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
             float originalCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
             
-            // Stage 1: Subtle instability (small flicker)
+            // Store the original position of the console text
+            Vector2 originalTextPosition = Vector2.zero;
+            if (consoleText != null)
+            {
+                RectTransform textRect = consoleText.GetComponent<RectTransform>();
+                originalTextPosition = textRect.anchoredPosition;
+            }
+            
+            // Stage 1: Subtle instability (small flicker) - keep text visible
             PlayRandomGlitchSound(0.3f);
             AudioManager.SFX.Play("pink_noise_2", 0.1f);
             
@@ -1114,7 +1122,7 @@ public class NewGameAnimator : MonoBehaviour
             
             yield return new WaitForSeconds(0.4f);
             
-            // Stage 2: Medium instability (more obvious glitches)
+            // Stage 2: Medium instability (more obvious glitches) - text still visible
             PlayRandomGlitchSound(0.4f);
             
             // Second shader adjustment
@@ -1123,21 +1131,20 @@ public class NewGameAnimator : MonoBehaviour
             shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 1.3f);
             shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 1.3f);
             
-            // Medium screen flicker
+            // Medium screen flicker with text jitter
             if (transitionImage != null && consoleText != null)
             {
                 // Brief text jitter
                 RectTransform textRect = consoleText.GetComponent<RectTransform>();
-                Vector2 originalPos = textRect.anchoredPosition;
                 
                 // Jitter text position a few times
                 for (int i = 0; i < 3; i++)
                 {
-                    textRect.anchoredPosition = originalPos + new Vector2(Random.Range(-3f, 3f), Random.Range(-3f, 3f));
+                    textRect.anchoredPosition = originalTextPosition + new Vector2(Random.Range(-3f, 3f), Random.Range(-3f, 3f));
                     yield return new WaitForSeconds(0.05f);
                 }
                 
-                textRect.anchoredPosition = originalPos;
+                textRect.anchoredPosition = originalTextPosition;
                 
                 // Medium flicker
                 Color originalColor = transitionImage.color;
@@ -1150,14 +1157,14 @@ public class NewGameAnimator : MonoBehaviour
             yield return new WaitForSeconds(0.3f);
             
             // Final pre-shutdown warning
-            // Trigger one medium glitch line
+            // Trigger one medium glitch line while text is still visible
             StartCoroutine(CreatePreShutdownGlitchLine(transitionImage.transform));
             PlayRandomGlitchSound(0.5f);
             
             yield return new WaitForSeconds(0.15f);
         }
         
-        // Now proceed with the actual shutdown
+        // Now proceed with more intense glitches while text is still visible
         // Play switch-off sound
         AudioManager.SFX.Play("switch_6", 0.2f);
         
@@ -1172,7 +1179,7 @@ public class NewGameAnimator : MonoBehaviour
         // Let the sound play for a moment before effects start
         yield return new WaitForSeconds(0.1f);
         
-        // Increase CRT glitch effects - intensify for a shorter, more dramatic effect
+        // Increase CRT glitch effects while text is still visible
         if (shaderMaterial != null)
         {
             // Store original values
@@ -1181,144 +1188,110 @@ public class NewGameAnimator : MonoBehaviour
             float originalCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
             float originalCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
             
-            // Increase values for shutdown effect - more intense for faster effect
+            // Increase values for shutdown effect
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 5f);
             shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 4f);
             shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 2.5f);
             shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 2.5f);
-            
-            // Wait briefly with high distortion, but less time
-            yield return new WaitForSeconds(0.07f);
         }
 
-        // Add glitch lines that appear during the shutdown - shorter duration
+        // Add glitch lines while the text is still visible
         StartCoroutine(CreateGlitchLines(transitionImage.transform, 0.8f));
         
-        // CRT collapse effect - more immediate
-        if (scanlineOverlay != null)
+        // Rapidly jitter the text during the glitch effect
+        if (consoleText != null)
         {
-            // Final intense distortion flash
-            TriggerGlitchEffect(1.2f, 0.08f);
+            RectTransform textRect = consoleText.GetComponent<RectTransform>();
+            Vector2 originalPos = textRect.anchoredPosition;
             
-            // Quickly brighten the scanlines - faster for quicker effect
-            Color overlayColor = scanlineOverlay.color;
-            float originalAlpha = overlayColor.a;
-            float elapsedTime = 0f;
-            float flashDuration = 0.07f; // Shorter flash
+            // Violent text jitter for a brief moment
+            float jitterDuration = 0.4f;
+            float jitterElapsed = 0f;
             
-            while (elapsedTime < flashDuration)
+            while (jitterElapsed < jitterDuration)
             {
-                elapsedTime += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsedTime / flashDuration);
+                jitterElapsed += Time.deltaTime;
                 
-                overlayColor.a = Mathf.Lerp(originalAlpha, 0.5f, t); // More intense brightness
-                scanlineOverlay.color = overlayColor;
-                yield return null;
-            }
-        }
-        
-        // Horizontal line collapse (classic CRT power off) - faster collapse
-        if (consoleText != null && transitionImage != null)
-        {
-            // Hide the console text immediately
-            consoleText.gameObject.SetActive(false);
-            
-            // Create the shrinking white line effect
-            RectTransform canvasRect = transitionImage.GetComponent<RectTransform>();
-            float screenHeight = canvasRect.rect.height;
-            
-            // Create a white line
-            GameObject lineObj = new GameObject("PowerOffLine");
-            lineObj.transform.SetParent(transitionImage.transform, false);
-            Image lineImage = lineObj.AddComponent<Image>();
-            lineImage.color = Color.white;
-            
-            // Set up the line's rect transform
-            RectTransform lineRect = lineImage.GetComponent<RectTransform>();
-            lineRect.anchorMin = new Vector2(0, 0.5f);
-            lineRect.anchorMax = new Vector2(1, 0.5f);
-            lineRect.sizeDelta = new Vector2(0, screenHeight * 0.1f); // Start at 10% of screen height
-            
-            // Quick brightness flash before collapse - faster flash
-            float elapsedTime = 0f;
-            float flashDuration = 0.03f; // Shorter flash
-            
-            while (elapsedTime < flashDuration)
-            {
-                elapsedTime += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsedTime / flashDuration);
+                // More extreme jitter as time progresses
+                float intensity = Mathf.Lerp(3f, 12f, jitterElapsed / jitterDuration);
+                textRect.anchoredPosition = originalPos + new Vector2(
+                    Random.Range(-intensity, intensity),
+                    Random.Range(-intensity, intensity)
+                );
                 
-                lineRect.sizeDelta = new Vector2(0, Mathf.Lerp(screenHeight * 0.1f, screenHeight, t));
-                yield return null;
-            }
-            
-            // Set to full height
-            lineRect.sizeDelta = new Vector2(0, screenHeight);
-            
-            // Brief pause at full brightness - shorter pause
-            yield return new WaitForSeconds(0.03f);
-            
-            // Collapse to a thin line - faster collapse
-            elapsedTime = 0f;
-            float collapseDuration = 0.12f; // Shorter duration for quicker collapse
-            
-            while (elapsedTime < collapseDuration)
-            {
-                elapsedTime += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsedTime / collapseDuration);
-                // Use easing for more natural collapse, but more aggressive
-                float easedT = t * t * t; // More aggressive curve
-                
-                lineRect.sizeDelta = new Vector2(0, Mathf.Lerp(screenHeight, 1f, easedT));
-                yield return null;
-            }
-            
-            // Set to final thin line
-            lineRect.sizeDelta = new Vector2(0, 1f);
-            
-            // Final flicker and fade out - quicken the whole effect
-            elapsedTime = 0f;
-            float fadeOutDuration = 0.1f; // Shorter duration
-            
-            while (elapsedTime < fadeOutDuration)
-            {
-                elapsedTime += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsedTime / fadeOutDuration);
-                
-                // Add slight flicker - more aggressive
-                if (Random.value < 0.4f) // Higher chance
+                // Random color distortion
+                if (Random.value < 0.3f)
                 {
-                    lineImage.enabled = !lineImage.enabled;
+                    consoleText.color = new Color(
+                        1f,
+                        Random.Range(0.8f, 1f),
+                        Random.Range(0.8f, 1f),
+                        1f
+                    );
+                }
+                else
+                {
+                    consoleText.color = Color.white;
                 }
                 
-                // Fade out
-                Color lineColor = lineImage.color;
-                lineColor.a = Mathf.Lerp(1f, 0f, t * t); // Faster fade at the end
-                lineImage.color = lineColor;
-                
                 yield return null;
             }
             
-            // Make sure line is gone
-            Destroy(lineObj);
-            
-            // Much shorter pause before final blackout
-            yield return new WaitForSeconds(0.05f);
-            
-            // Final complete blackout
-            if (transitionImage != null)
-            {
-                transitionImage.color = Color.black;
-            }
+            // Reset position before the final glitch
+            textRect.anchoredPosition = originalPos;
+            consoleText.color = Color.white;
         }
         
-        // Make sure everything is disabled before scene transition
-        if (scanlineOverlay != null)
+        // Final massive glitch before shutdown
+        TriggerGlitchEffect(1.5f, 0.15f);
+        PlayRandomGlitchSound(0.8f);
+        
+        yield return new WaitForSeconds(0.15f);
+        
+        // Screen tear effect - optional but looks cool
+        if (consoleText != null && transitionImage != null)
         {
-            scanlineOverlay.gameObject.SetActive(false);
+            // Create a quick "screen tear" effect
+            GameObject tearObj = new GameObject("ScreenTear");
+            tearObj.transform.SetParent(transitionImage.transform, false);
+            Image tearImage = tearObj.AddComponent<Image>();
+            tearImage.color = new Color(1f, 1f, 1f, 0.8f);
+            
+            RectTransform tearRect = tearImage.GetComponent<RectTransform>();
+            tearRect.anchorMin = new Vector2(0, 0.4f);
+            tearRect.anchorMax = new Vector2(1, 0.6f);
+            tearRect.sizeDelta = new Vector2(0, 20f);
+            
+            // Quick flash of the tear
+            yield return new WaitForSeconds(0.05f);
+            PlayRandomGlitchSound(1.0f);
+            
+            // Destroy the tear
+            Destroy(tearObj);
         }
         
-        // Brief pause in darkness - much shorter
+        // SUDDEN BLACK SCREEN - simulating monitor abruptly losing power
+        if (transitionImage != null)
+        {
+            // Hard cut to black
+            transitionImage.color = Color.black;
+            
+            // Hide console text and scanlines immediately
+            if (consoleText != null)
+            {
+                consoleText.gameObject.SetActive(false);
+            }
+            
+            if (scanlineOverlay != null)
+            {
+                scanlineOverlay.gameObject.SetActive(false);
+            }
+            
+            // One final loud glitch sound on shutdown
+            PlayRandomGlitchSound(1.0f);
+        }
+        
+        // Brief pause in darkness before scene transition
         yield return new WaitForSeconds(0.5f);
         
         // Now load the next scene
