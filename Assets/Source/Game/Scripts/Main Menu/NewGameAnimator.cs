@@ -289,8 +289,8 @@ public class NewGameAnimator : MonoBehaviour
             startColor.a = 0f;
             scanlineOverlay.color = startColor;
 
-            // Define the final subtle alpha (7/255 ≈ 0.027) - more subtle than before
-            float targetAlpha = 7f / 255f;
+            // Define the final subtle alpha - make it extremely subtle
+            float targetAlpha = 4f / 255f; // Even more subtle than before
 
             // Store the default shader values in case we can't get them from the material
             float originalIntensity = 0.5f;
@@ -321,7 +321,7 @@ public class NewGameAnimator : MonoBehaviour
             {
                 // Use a softer flash color - light gray instead of pure white
                 // and reduce the alpha for less intensity
-                Color flashColor = new Color(0.7f, 0.7f, 0.75f, 0.6f);
+                Color flashColor = new Color(0.7f, 0.7f, 0.75f, 0.5f); // Reduced alpha for less brightness
                 transitionImage.color = flashColor;
 
                 // Wait a very brief moment
@@ -353,11 +353,11 @@ public class NewGameAnimator : MonoBehaviour
             // Step 2: CRT warm-up phase
             elapsedTime = 0f;
 
-            // Start with a much higher initial alpha and glitch intensity
-            float initialOverlayAlpha = 0.4f; // Initial stronger scanline effect
-            float initialGlitch = baseGlitchIntensity * 3f; // High initial glitch
+            // Use much more subtle values for the scanline effect
+            float initialOverlayAlpha = 0.15f; // Reduced from 0.4f for less brightness
+            float initialGlitch = baseGlitchIntensity * 3f;
 
-            // Set the initial high intensity
+            // Set the initial effect - make it subtle
             Color overlayColor = scanlineOverlay.color;
             overlayColor.a = initialOverlayAlpha;
             scanlineOverlay.color = overlayColor;
@@ -366,9 +366,10 @@ public class NewGameAnimator : MonoBehaviour
             if (shaderMaterial != null)
             {
                 shaderMaterial.SetFloat("_GlitchIntensity", initialGlitch);
-                shaderMaterial.SetFloat("_Intensity", originalIntensity * 2.0f);
-                shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 1.5f);
-                shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 1.5f);
+                // Use less extreme values for more subtlety
+                shaderMaterial.SetFloat("_Intensity", originalIntensity * 1.5f); // Reduced from 2.0f
+                shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 1.3f); // Reduced from 1.5f
+                shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 1.3f); // Reduced from 1.5f
 
                 // Play random glitch sound
                 PlayRandomGlitchSound(0.7f);
@@ -378,16 +379,20 @@ public class NewGameAnimator : MonoBehaviour
             int flickerSteps = 3;
             for (int i = 0; i < flickerSteps; i++)
             {
-                // Dim down
+                // Instead of just opacity changes, add color tinting during flickers
                 float dimDuration = 0.05f;
                 elapsedTime = 0f;
+                Color tintColor = (i % 2 == 0) ? 
+                    new Color(1.0f, 0.9f, 0.9f, initialOverlayAlpha * 0.7f) : // Slight red tint
+                    new Color(0.9f, 0.9f, 1.0f, initialOverlayAlpha * 0.7f);  // Slight blue tint
+                
                 while (elapsedTime < dimDuration)
                 {
                     elapsedTime += Time.deltaTime;
                     float dimT = Mathf.Clamp01(elapsedTime / dimDuration);
 
-                    overlayColor = scanlineOverlay.color;
-                    overlayColor.a = Mathf.Lerp(initialOverlayAlpha, initialOverlayAlpha * 0.3f, dimT);
+                    // Use color transitions instead of just alpha
+                    overlayColor = Color.Lerp(scanlineOverlay.color, tintColor, dimT);
                     scanlineOverlay.color = overlayColor;
 
                     yield return null;
@@ -399,19 +404,31 @@ public class NewGameAnimator : MonoBehaviour
                     PlayRandomGlitchSound(0.5f);
                 }
 
-                // Brighten again
+                // Brighten again - return to normal color
                 float brightenDuration = 0.07f;
                 elapsedTime = 0f;
+                Color normalColor = new Color(1f, 1f, 1f, initialOverlayAlpha);
+                
                 while (elapsedTime < brightenDuration)
                 {
                     elapsedTime += Time.deltaTime;
                     float brightenT = Mathf.Clamp01(elapsedTime / brightenDuration);
 
-                    overlayColor = scanlineOverlay.color;
-                    overlayColor.a = Mathf.Lerp(initialOverlayAlpha * 0.3f, initialOverlayAlpha, brightenT);
+                    // Return to normal color
+                    overlayColor = Color.Lerp(scanlineOverlay.color, normalColor, brightenT);
                     scanlineOverlay.color = overlayColor;
 
                     yield return null;
+                }
+                
+                // Add occasional shader glitch during the flicker sequence
+                if (Random.value < 0.5f && shaderMaterial != null)
+                {
+                    // Create a brief texture distortion
+                    float originalOffset = shaderMaterial.GetFloat("_Offset");
+                    shaderMaterial.SetFloat("_Offset", Random.Range(0f, 1f));
+                    yield return new WaitForSeconds(0.03f);
+                    shaderMaterial.SetFloat("_Offset", originalOffset);
                 }
             }
 
@@ -427,7 +444,7 @@ public class NewGameAnimator : MonoBehaviour
                 // Ease out function for more natural stabilizing
                 float easedT = 1 - (1 - t) * (1 - t);
 
-                // Update the overlay alpha - gradually reducing from initial high value
+                // Update the overlay alpha - gradually reducing from initial value to the very subtle target
                 overlayColor = scanlineOverlay.color;
                 overlayColor.a = Mathf.Lerp(initialOverlayAlpha, targetAlpha, easedT);
                 scanlineOverlay.color = overlayColor;
@@ -622,7 +639,7 @@ public class NewGameAnimator : MonoBehaviour
                 float targetGlitch = isError ? errorGlitchIntensity : baseGlitchIntensity;
                 StartCoroutine(TransitionGlitchIntensity(targetGlitch, isError ? 0.2f : 0.5f));
 
-                // Add more intense random glitch on errors
+                // Add more interesting visual effects - color distortion and scanline jitter
                 if (isError)
                 {
                     TriggerGlitchEffect(errorGlitchIntensity * 1.5f, 0.15f);
@@ -900,11 +917,28 @@ public class NewGameAnimator : MonoBehaviour
             // Add subtle visual feedback based on progress
             if (scanlineOverlay != null && shaderMaterial != null)
             {
-                // Gradually reduce scan line intensity as boot progresses - make more subtle
-                float scanlineAlpha = Mathf.Lerp(0.15f, 0.07f, overallProgress); // Reduced values for subtlety
+                // Very subtle scanline intensity during boot - make it barely visible
+                float scanlineAlpha = Mathf.Lerp(0.06f, 0.04f, overallProgress); // Extremely subtle values
                 Color overlayColor = scanlineOverlay.color;
                 overlayColor.a = scanlineAlpha;
                 scanlineOverlay.color = overlayColor;
+                
+                // Visual interest: Occasionally add a quick color tint on major progress points
+                if (message.StartsWith("[INIT]") && Random.value < 0.3f)
+                {
+                    // Quick subtle blue tint to suggest initialization
+                    StartCoroutine(QuickOverlayTint(new Color(0.9f, 0.95f, 1.0f, scanlineAlpha * 1.2f), 0.2f));
+                }
+                else if (message.StartsWith("[ERROR]"))
+                {
+                    // Quick red tint for errors
+                    StartCoroutine(QuickOverlayTint(new Color(1.0f, 0.9f, 0.9f, scanlineAlpha * 1.5f), 0.3f));
+                }
+                else if (message.Contains("COMPLETED") || message.Contains("[OK]"))
+                {
+                    // Quick green tint for completions
+                    StartCoroutine(QuickOverlayTint(new Color(0.9f, 1.0f, 0.9f, scanlineAlpha * 1.2f), 0.2f));
+                }
                 
                 // Gradually reduce curvature as system stabilizes
                 shaderMaterial.SetFloat("_CurvatureX", Mathf.Lerp(baseCurvatureX * 1.5f, baseCurvatureX, overallProgress));
@@ -1027,8 +1061,51 @@ public class NewGameAnimator : MonoBehaviour
             shaderMaterial.SetFloat("_GlitchIntensity", intensity);
             shaderMaterial.SetFloat("_GlitchSpeed", glitchSpeed * 2f);
             
-            // Wait for duration
-            yield return new WaitForSeconds(duration);
+            // Add more interesting visual effects - color distortion and scanline jitter
+            if (scanlineOverlay != null)
+            {
+                Color originalColor = scanlineOverlay.color;
+                float originalAlpha = originalColor.a;
+                
+                // Brief color tint to the scanlines (subtle but noticeable)
+                scanlineOverlay.color = new Color(
+                    1.0f, // Red tint
+                    originalColor.g * 0.8f,
+                    originalColor.b * 0.8f,
+                    originalAlpha * 1.2f // Slightly more visible but not too bright
+                );
+                
+                // Wait a very short time
+                yield return new WaitForSeconds(duration * 0.2f);
+                
+                // Return to normal color but keep the effect going
+                scanlineOverlay.color = originalColor;
+            }
+            
+            // Brief distortion of text if it's active
+            if (consoleText != null && consoleText.gameObject.activeSelf && Random.value < 0.7f)
+            {
+                RectTransform textRect = consoleText.GetComponent<RectTransform>();
+                Vector2 originalPos = textRect.anchoredPosition;
+                
+                // Quick jitter
+                for (int i = 0; i < 3; i++)
+                {
+                    // Scale jitter based on intensity
+                    float jitterAmount = intensity * 5f;
+                    textRect.anchoredPosition = originalPos + new Vector2(
+                        Random.Range(-jitterAmount, jitterAmount),
+                        Random.Range(-jitterAmount, jitterAmount)
+                    );
+                    yield return new WaitForSeconds(duration * 0.05f);
+                }
+                
+                // Reset position
+                textRect.anchoredPosition = originalPos;
+            }
+            
+            // Wait for the rest of the duration
+            yield return new WaitForSeconds(duration * 0.6f);
             
             // Restore original values
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity);
@@ -1673,5 +1750,41 @@ public class NewGameAnimator : MonoBehaviour
         
         // Destroy the line
         Destroy(lineObj);
+    }
+
+    // Add this helper method for quick color tints to add visual interest during boot
+    private IEnumerator QuickOverlayTint(Color targetColor, float duration)
+    {
+        if (scanlineOverlay == null) yield break;
+        
+        Color originalColor = scanlineOverlay.color;
+        float elapsedTime = 0f;
+        
+        // Fade to target color
+        while (elapsedTime < duration * 0.4f)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / (duration * 0.4f));
+            
+            scanlineOverlay.color = Color.Lerp(originalColor, targetColor, t);
+            yield return null;
+        }
+        
+        // Hold briefly
+        yield return new WaitForSeconds(duration * 0.2f);
+        
+        // Fade back
+        elapsedTime = 0f;
+        while (elapsedTime < duration * 0.4f)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / (duration * 0.4f));
+            
+            scanlineOverlay.color = Color.Lerp(targetColor, originalColor, t);
+            yield return null;
+        }
+        
+        // Ensure we return to original color
+        scanlineOverlay.color = originalColor;
     }
 }
