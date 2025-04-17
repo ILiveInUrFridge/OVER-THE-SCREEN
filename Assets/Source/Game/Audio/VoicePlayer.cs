@@ -20,10 +20,10 @@ namespace Game.Audio
     /// <summary>
     ///     Player responsible for voice lines and dialogue
     /// </summary>
-    public class VoicePlayer : AudioPlayer
+    public class VoicePlayer : AudioPlayer, ILoggable
     {
         [Header("Voice Settings")]
-        [SerializeField] private bool interruptCurrentVoice = true;
+        [SerializeField] private bool interruptCurrentVoice = false;
         [SerializeField] private float voiceDelayBetweenClips = 0.2f;
         
         [Header("Voice Library")]
@@ -105,7 +105,13 @@ namespace Game.Audio
                 
                 // Track this sound
                 activeSounds[soundID] = source;
-                currentVoiceID = soundID;
+                
+                // Only set as current voice if we're not already playing one
+                // or if we're set to interrupt
+                if (currentVoiceID < 0 || interruptCurrentVoice)
+                {
+                    currentVoiceID = soundID;
+                }
                 
                 // If not looping, remove from tracking when done
                 if (!loop)
@@ -120,11 +126,14 @@ namespace Game.Audio
         /// <summary>
         ///     Play a voice line by ID
         /// </summary>
-        public int Play(string voiceLineID)
+        public override int Play(string voiceLineID, float volume = 1.0f, bool loop = false)
         {
             if (voiceLookup.TryGetValue(voiceLineID, out VoiceLine line))
             {
-                int id = Play(line.clip, line.volume);
+                // Use line-specific volume if not explicitly overridden
+                if (volume == 1.0f) volume = line.volume;
+                
+                int id = Play(line.clip, volume, loop);
                 
                 // Fire event for subtitle display
                 OnVoiceLineStart?.Invoke(voiceLineID, line.subtitle);
@@ -132,7 +141,7 @@ namespace Game.Audio
                 return id;
             }
             
-            Debug.LogWarning($"VoicePlayer: Voice line '{voiceLineID}' not found.");
+            this.LogWarning($"Voice line '{voiceLineID}' not found.");
             return -1;
         }
         
@@ -149,7 +158,7 @@ namespace Game.Audio
                 }
                 else
                 {
-                    Debug.LogWarning($"VoicePlayer: Voice line '{id}' not found for queuing.");
+                    this.LogWarning($"Voice line '{id}' not found for queuing.");
                 }
             }
             
@@ -172,10 +181,7 @@ namespace Game.Audio
                 
                 if (voiceLookup.TryGetValue(nextLineID, out VoiceLine line))
                 {
-                    int id = Play(line.clip, line.volume);
-                    
-                    // Fire event for subtitle display
-                    OnVoiceLineStart?.Invoke(nextLineID, line.subtitle);
+                    int id = Play(nextLineID);
                     
                     // Wait for the clip to finish
                     yield return new WaitForSeconds(line.clip.length + voiceDelayBetweenClips);

@@ -16,7 +16,7 @@ namespace Game.Audio
     /// <summary>
     ///     Player responsible for sound effects
     /// </summary>
-    public class SFXPlayer : AudioPlayer
+    public class SFXPlayer : AudioPlayer, ILoggable
     {
         [Header("Sound Effects Library")]
         [SerializeField] private List<SoundEffect> soundEffects = new List<SoundEffect>();
@@ -76,9 +76,16 @@ namespace Game.Audio
             
             if (source != null)
             {
+                // If source is already playing, we need to stop it first
+                if (source.isPlaying)
+                {
+                    source.Stop();
+                }
+                
                 source.clip = clip;
                 source.volume = volume;
                 source.loop = loop;
+                source.time = 0; // Reset playback position
                 source.Play();
                 
                 // Track this sound if we need to stop it later
@@ -97,14 +104,14 @@ namespace Game.Audio
         /// <summary>
         ///     Play a sound effect by name
         /// </summary>
-        public int Play(string soundName, float volume = 1.0f, bool loop = false)
+        public override int Play(string soundName, float volume = 1.0f, bool loop = false)
         {
             if (soundEffectLookup.TryGetValue(soundName, out AudioClip clip))
             {
                 return Play(clip, volume, loop);
             }
             
-            Debug.LogWarning($"SFXPlayer: Sound effect '{soundName}' not found.");
+            this.LogWarning($"Sound effect '{soundName}' not found.");
             return -1;
         }
         

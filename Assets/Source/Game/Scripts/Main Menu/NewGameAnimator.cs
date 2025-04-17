@@ -122,8 +122,11 @@ public class NewGameAnimator : MonoBehaviour
     {
         if (canProceed && Input.anyKeyDown)
         {
-            // Start power-off sequence instead of loading scene directly
-            StartCoroutine(MonitorPowerOffSequence());
+            // Disable further input
+            canProceed = false;
+            
+            // Show "Proceeding..." message and start shutdown after delay
+            StartCoroutine(ShowProceedingMessage());
         }
 
         // Update scanline effect
@@ -280,8 +283,10 @@ public class NewGameAnimator : MonoBehaviour
         // Create a CRT monitor power-on effect
         if (scanlineOverlay != null)
         {
-            AudioManager.Music.Play("ambient.computer_hum");
-            AudioManager.Music.Play("ambient.texture_2");
+            // Play both ambient sounds with fade-in effects
+            // Use default track volume from inspector by using volume = 1.0f
+            AudioManager.Music.Play(trackName: "ambient.computer_hum", fadeIn: 1.0f);
+            AudioManager.Music.Play(trackName: "ambient.texture_2", fadeIn: 1.5f);
             
             // Activate the overlay but set alpha to 0
             scanlineOverlay.gameObject.SetActive(true);
@@ -1158,9 +1163,6 @@ public class NewGameAnimator : MonoBehaviour
     // Monitor power-off effect before scene transition
     private IEnumerator MonitorPowerOffSequence()
     {
-        // Disable input during transition
-        canProceed = false;
-        
         // Add a pre-shutdown sequence - screen flicker and destabilization before turning off
         // This makes the shutdown feel less sudden and more natural
         if (shaderMaterial != null)
@@ -1177,7 +1179,44 @@ public class NewGameAnimator : MonoBehaviour
             {
                 RectTransform textRect = consoleText.GetComponent<RectTransform>();
                 originalTextPosition = textRect.anchoredPosition;
+                
+                // Store original text for later scrambling
+                string originalText = consoleText.text;
             }
+            
+            // Initial phase: Everything seems fine for a moment (normal operation)
+            AudioManager.SFX.Play("bong_1", 0.2f);
+            
+            // Brief normal pause as if everything is fine
+            yield return new WaitForSeconds(0.8f);
+            
+            // Slight unexpected glitch - first sign something is wrong
+            TriggerGlitchEffect(0.2f, 0.1f);
+            
+            // First text corruption - just a character or two
+            if (consoleText != null)
+            {
+                string currentText = consoleText.text;
+                // Corrupt just a few characters (1%)
+                consoleText.text = CorruptText(currentText, 0.01f);
+            }
+            
+            // Return to normal briefly
+            yield return new WaitForSeconds(0.6f);
+            
+            // Another small glitch - things are getting unstable
+            TriggerGlitchEffect(0.25f, 0.15f);
+            
+            // Second text corruption - a bit more noticeable
+            if (consoleText != null)
+            {
+                string currentText = consoleText.text;
+                // Corrupt more characters (3%)
+                consoleText.text = CorruptText(currentText, 0.03f);
+            }
+            
+            // Brief pause
+            yield return new WaitForSeconds(0.4f);
             
             // Stage 1: Subtle instability (small flicker) - keep text visible
             PlayRandomGlitchSound(0.3f);
@@ -1197,6 +1236,14 @@ public class NewGameAnimator : MonoBehaviour
                 transitionImage.color = originalColor;
             }
             
+            // More text corruption
+            if (consoleText != null)
+            {
+                string currentText = consoleText.text;
+                // More aggressive corruption (7%)
+                consoleText.text = CorruptText(currentText, 0.07f);
+            }
+            
             yield return new WaitForSeconds(0.4f);
             
             // Stage 2: Medium instability (more obvious glitches) - text still visible
@@ -1211,13 +1258,19 @@ public class NewGameAnimator : MonoBehaviour
             // Medium screen flicker with text jitter
             if (transitionImage != null && consoleText != null)
             {
-                // Brief text jitter
+                // Brief text jitter with progressive corruption
                 RectTransform textRect = consoleText.GetComponent<RectTransform>();
                 
-                // Jitter text position a few times
+                // Jitter text position a few times and increase corruption
                 for (int i = 0; i < 3; i++)
                 {
                     textRect.anchoredPosition = originalTextPosition + new Vector2(Random.Range(-3f, 3f), Random.Range(-3f, 3f));
+                    
+                    // Progressive text corruption during jitter
+                    string currentText = consoleText.text;
+                    float corruptionLevel = 0.1f + (i * 0.05f); // Increasing corruption (10%, 15%, 20%)
+                    consoleText.text = CorruptText(currentText, corruptionLevel);
+                    
                     yield return new WaitForSeconds(0.05f);
                 }
                 
@@ -1238,6 +1291,14 @@ public class NewGameAnimator : MonoBehaviour
             StartCoroutine(CreatePreShutdownGlitchLine(transitionImage.transform));
             PlayRandomGlitchSound(0.5f);
             
+            // Heavy text corruption
+            if (consoleText != null)
+            {
+                string currentText = consoleText.text;
+                // Very heavy corruption (25%)
+                consoleText.text = CorruptText(currentText, 0.25f);
+            }
+            
             yield return new WaitForSeconds(0.15f);
         }
         
@@ -1255,6 +1316,12 @@ public class NewGameAnimator : MonoBehaviour
         
         // Let the sound play for a moment before effects start
         yield return new WaitForSeconds(0.1f);
+        
+        // Start progressive text corruption for the final phase
+        if (consoleText != null)
+        {
+            StartCoroutine(ProgressiveTextCorruption(0.7f));
+        }
         
         // Increase CRT glitch effects while text is still visible
         if (shaderMaterial != null)
@@ -1311,12 +1378,20 @@ public class NewGameAnimator : MonoBehaviour
                     consoleText.color = Color.white;
                 }
                 
+                // Extreme text corruption during violent jitter
+                string currentText = consoleText.text;
+                float corruptionFactor = Mathf.Lerp(0.3f, 0.7f, jitterElapsed / jitterDuration);
+                consoleText.text = CorruptText(currentText, corruptionFactor);
+                
                 yield return null;
             }
             
             // Reset position before the final glitch
             textRect.anchoredPosition = originalPos;
             consoleText.color = Color.white;
+            
+            // Maximum corruption at the end - almost unreadable
+            consoleText.text = CorruptText(consoleText.text, 0.9f);
         }
         
         // Final massive glitch before shutdown
@@ -1373,6 +1448,262 @@ public class NewGameAnimator : MonoBehaviour
         
         // Now load the next scene
         SceneManager.LoadScene("IntroAndTutorial");
+    }
+
+    // Helper method to corrupt text with random characters
+    private string CorruptText(string text, float corruptionFactor)
+    {
+        // Handle empty or null text
+        if (string.IsNullOrEmpty(text)) return text;
+        
+        // Convert to char array for manipulation
+        char[] chars = text.ToCharArray();
+        
+        // Determine how many characters to corrupt
+        int corruptCount = Mathf.FloorToInt(chars.Length * corruptionFactor);
+        
+        // Protect against corrupting rich text tags - store their positions
+        List<int> protectedIndices = new List<int>();
+        bool inTag = false;
+        for (int i = 0; i < chars.Length; i++)
+        {
+            if (chars[i] == '<') inTag = true;
+            if (inTag) protectedIndices.Add(i);
+            if (chars[i] == '>') inTag = false;
+        }
+        
+        // Scramble random characters
+        for (int i = 0; i < corruptCount; i++)
+        {
+            // Pick a random position that's not in a rich text tag
+            int attempts = 0;
+            int pos;
+            do
+            {
+                pos = Random.Range(0, chars.Length);
+                attempts++;
+                // Give up after too many attempts to avoid infinite loops
+                if (attempts > 50) break;
+            } while (protectedIndices.Contains(pos));
+            
+            // Skip if we couldn't find a valid position
+            if (attempts > 50) continue;
+            
+            // Replace with a random ASCII character - including symbols and control chars for more visual chaos
+            // Weighted toward more visually interesting characters
+            float randomType = Random.value;
+            if (randomType < 0.4f)
+            {
+                // Standard ASCII
+                chars[pos] = (char)Random.Range(33, 126);
+            }
+            else if (randomType < 0.7f)
+            {
+                // Control characters and extended ASCII that look "glitchy"
+                chars[pos] = (char)Random.Range(176, 223);
+            }
+            else if (randomType < 0.85f)
+            {
+                // Special characters that create visual noise
+                char[] specialChars = new char[] { '▓', '▒', '░', '█', '■', '□', '▪', '▫', '◊', '○', '●', '◘', '◙', '♦', '¶' };
+                chars[pos] = specialChars[Random.Range(0, specialChars.Length)];
+            }
+            else
+            {
+                // Just scrambled versions of normal characters
+                chars[pos] = (char)(chars[pos] + Random.Range(-5, 5));
+            }
+        }
+        
+        // Convert back to string
+        return new string(chars);
+    }
+    
+    // Progressive text corruption for the final shutdown sequence
+    private IEnumerator ProgressiveTextCorruption(float duration)
+    {
+        if (consoleText == null) yield break;
+        
+        string originalText = consoleText.text;
+        float elapsed = 0f;
+        
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float progress = elapsed / duration;
+            
+            // Exponential corruption - starts slow, gets very aggressive
+            float corruptionFactor = Mathf.Pow(progress, 2) * 0.6f; // Up to 60% corruption
+            
+            // Apply corruption
+            consoleText.text = CorruptText(originalText, corruptionFactor);
+            
+            // Brief pause between corruption updates
+            yield return new WaitForSeconds(0.05f);
+        }
+    }
+
+    // New method to show "Proceeding..." message before shutdown
+    private IEnumerator ShowProceedingMessage()
+    {
+        // Play confirmation sound
+        AudioManager.SFX.Play("confirm_2", 0.3f);
+        
+        if (consoleText != null)
+        {
+            // Get current text and ensure cursor is removed if present
+            string currentText = consoleText.text;
+            if (currentText.EndsWith(cursorChar))
+            {
+                currentText = currentText.Substring(0, currentText.Length - 1);
+            }
+            
+            // Remove the "PRESS ANY KEY TO PROCEED" message
+            int pressKeyIndex = currentText.LastIndexOf(pressAnyKeyMessage);
+            if (pressKeyIndex >= 0)
+            {
+                currentText = currentText.Substring(0, pressKeyIndex);
+            }
+            
+            // Add the "Proceeding..." message with a different color (yellow/gold)
+            Color proceedingColor = new Color(0.9f, 0.8f, 0.2f); // Gold/yellow color
+            string proceedingMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(proceedingColor)}>Proceeding...</color>";
+            consoleText.text = currentText + "\n> " + proceedingMessage;
+            
+            // Show cursor blinking at the end of the message
+            StartCoroutine(BlinkCursorAfterProceeding(currentText, proceedingMessage));
+            
+            // Wait a moment before starting the shutdown sequence
+            yield return new WaitForSeconds(1.5f);
+        }
+        
+        // Start power-off sequence
+        StartCoroutine(MonitorPowerOffSequence());
+    }
+    
+    // New method to blink the cursor after the "Proceeding..." message
+    private IEnumerator BlinkCursorAfterProceeding(string baseText, string proceedingMessage)
+    {
+        bool localCursorVisible = true;
+        float elapsed = 0f;
+        float totalTime = 1.5f; // Match the delay before shutdown
+        
+        while (elapsed < totalTime)
+        {
+            // Toggle cursor visibility
+            localCursorVisible = !localCursorVisible;
+            
+            // Update text with or without cursor
+            if (localCursorVisible)
+            {
+                consoleText.text = baseText + "\n> " + proceedingMessage + cursorChar;
+            }
+            else
+            {
+                consoleText.text = baseText + "\n> " + proceedingMessage;
+            }
+            
+            // Wait for blink interval
+            yield return new WaitForSeconds(cursorBlinkSpeed);
+            elapsed += cursorBlinkSpeed;
+        }
+    }
+
+    // Helper method to play a random glitch sound effect
+    private void PlayRandomGlitchSound(float volume = 0.4f)
+    {
+        int soundNumber = Random.Range(1, 5); // Random number between 1 and 4
+        string soundName = "glitch_" + soundNumber;
+        AudioManager.SFX.Play(soundName, volume);
+    }
+
+    // Add this helper method for quick color tints to add visual interest during boot
+    private IEnumerator QuickOverlayTint(Color targetColor, float duration)
+    {
+        if (scanlineOverlay == null) yield break;
+        
+        Color originalColor = scanlineOverlay.color;
+        float elapsedTime = 0f;
+        
+        // Fade to target color
+        while (elapsedTime < duration * 0.4f)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / (duration * 0.4f));
+            
+            scanlineOverlay.color = Color.Lerp(originalColor, targetColor, t);
+            yield return null;
+        }
+        
+        // Hold briefly
+        yield return new WaitForSeconds(duration * 0.2f);
+        
+        // Fade back
+        elapsedTime = 0f;
+        while (elapsedTime < duration * 0.4f)
+        {
+            elapsedTime += Time.deltaTime;
+            float t = Mathf.Clamp01(elapsedTime / (duration * 0.4f));
+            
+            scanlineOverlay.color = Color.Lerp(targetColor, originalColor, t);
+            yield return null;
+        }
+        
+        // Ensure we return to original color
+        scanlineOverlay.color = originalColor;
+    }
+
+    // Create a single pre-shutdown glitch line
+    private IEnumerator CreatePreShutdownGlitchLine(Transform parent)
+    {
+        // Get dimensions
+        RectTransform canvasRect = parent.GetComponent<RectTransform>();
+        float screenHeight = canvasRect.rect.height;
+        
+        // Create the glitch line
+        GameObject lineObj = new GameObject("PreShutdownGlitch");
+        lineObj.transform.SetParent(parent, false);
+        Image lineImage = lineObj.AddComponent<Image>();
+        lineImage.color = new Color(1f, 1f, 1f, 0.8f);
+        
+        RectTransform lineRect = lineImage.GetComponent<RectTransform>();
+        
+        // Horizontal line
+        lineRect.anchorMin = new Vector2(0, 0);
+        lineRect.anchorMax = new Vector2(1, 0);
+        
+        // Position in the middle-ish of screen
+        float yPos = Random.Range(0.4f, 0.6f);
+        lineRect.anchoredPosition = new Vector2(0, screenHeight * yPos);
+        
+        // Thin line
+        lineRect.sizeDelta = new Vector2(0, 1.5f);
+        
+        // Glitch appearance
+        float lifetime = 0.3f;
+        float elapsed = 0f;
+        
+        while (elapsed < lifetime)
+        {
+            elapsed += Time.deltaTime;
+            
+            // Random flickering
+            if (Random.value < 0.4f)
+            {
+                lineImage.enabled = !lineImage.enabled;
+            }
+            
+            // Occasional position shift
+            if (Random.value < 0.3f)
+            {
+                lineRect.anchoredPosition = new Vector2(0, screenHeight * (yPos + Random.Range(-0.02f, 0.02f)));
+            }
+            
+            yield return null;
+        }
+        
+        // Destroy the line
+        Destroy(lineObj);
     }
 
     // Create thin white lines that appear and disappear randomly to simulate monitor glitching
@@ -1689,102 +2020,5 @@ public class NewGameAnimator : MonoBehaviour
     {
         public float CreationTime;
         public float Lifetime;
-    }
-
-    // Helper method to play a random glitch sound effect
-    private void PlayRandomGlitchSound(float volume = 0.4f)
-    {
-        int soundNumber = Random.Range(1, 5); // Random number between 1 and 4
-        string soundName = "glitch_" + soundNumber;
-        AudioManager.SFX.Play(soundName, volume);
-    }
-
-    // Create a single pre-shutdown glitch line
-    private IEnumerator CreatePreShutdownGlitchLine(Transform parent)
-    {
-        // Get dimensions
-        RectTransform canvasRect = parent.GetComponent<RectTransform>();
-        float screenHeight = canvasRect.rect.height;
-        
-        // Create the glitch line
-        GameObject lineObj = new GameObject("PreShutdownGlitch");
-        lineObj.transform.SetParent(parent, false);
-        Image lineImage = lineObj.AddComponent<Image>();
-        lineImage.color = new Color(1f, 1f, 1f, 0.8f);
-        
-        RectTransform lineRect = lineImage.GetComponent<RectTransform>();
-        
-        // Horizontal line
-        lineRect.anchorMin = new Vector2(0, 0);
-        lineRect.anchorMax = new Vector2(1, 0);
-        
-        // Position in the middle-ish of screen
-        float yPos = Random.Range(0.4f, 0.6f);
-        lineRect.anchoredPosition = new Vector2(0, screenHeight * yPos);
-        
-        // Thin line
-        lineRect.sizeDelta = new Vector2(0, 1.5f);
-        
-        // Glitch appearance
-        float lifetime = 0.3f;
-        float elapsed = 0f;
-        
-        while (elapsed < lifetime)
-        {
-            elapsed += Time.deltaTime;
-            
-            // Random flickering
-            if (Random.value < 0.4f)
-            {
-                lineImage.enabled = !lineImage.enabled;
-            }
-            
-            // Occasional position shift
-            if (Random.value < 0.3f)
-            {
-                lineRect.anchoredPosition = new Vector2(0, screenHeight * (yPos + Random.Range(-0.02f, 0.02f)));
-            }
-            
-            yield return null;
-        }
-        
-        // Destroy the line
-        Destroy(lineObj);
-    }
-
-    // Add this helper method for quick color tints to add visual interest during boot
-    private IEnumerator QuickOverlayTint(Color targetColor, float duration)
-    {
-        if (scanlineOverlay == null) yield break;
-        
-        Color originalColor = scanlineOverlay.color;
-        float elapsedTime = 0f;
-        
-        // Fade to target color
-        while (elapsedTime < duration * 0.4f)
-        {
-            elapsedTime += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsedTime / (duration * 0.4f));
-            
-            scanlineOverlay.color = Color.Lerp(originalColor, targetColor, t);
-            yield return null;
-        }
-        
-        // Hold briefly
-        yield return new WaitForSeconds(duration * 0.2f);
-        
-        // Fade back
-        elapsedTime = 0f;
-        while (elapsedTime < duration * 0.4f)
-        {
-            elapsedTime += Time.deltaTime;
-            float t = Mathf.Clamp01(elapsedTime / (duration * 0.4f));
-            
-            scanlineOverlay.color = Color.Lerp(targetColor, originalColor, t);
-            yield return null;
-        }
-        
-        // Ensure we return to original color
-        scanlineOverlay.color = originalColor;
     }
 }

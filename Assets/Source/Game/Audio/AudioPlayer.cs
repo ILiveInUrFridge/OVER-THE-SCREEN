@@ -14,8 +14,10 @@ namespace Game.Audio
         [SerializeField] protected AudioSource audioSource;
         [SerializeField] protected bool playOnAwake = false;
         [SerializeField] protected bool loop = false;
-        [Tooltip("How many simultaneous sounds this player can play")]
-        [SerializeField] protected int poolSize = 5;
+        [Tooltip("Initial pool size - more sources will be created if needed")]
+        [SerializeField] protected int initialPoolSize = 5;
+        [Tooltip("Maximum audio sources to create (0 = unlimited)")]
+        [SerializeField] protected int maxAudioSources = 0;
         
         // Volume parameter name from VolumeManager
         protected string volumeParameter;
@@ -43,16 +45,12 @@ namespace Game.Audio
             audioSource.playOnAwake = playOnAwake;
             audioSource.loop = loop;
             
-            // Create pool of audio sources for multiple simultaneous sounds
+            // Create initial pool of audio sources for multiple simultaneous sounds
             audioSourcePool.Add(audioSource);
             
-            for (int i = 1; i < poolSize; i++)
+            for (int i = 1; i < initialPoolSize; i++)
             {
-                AudioSource newSource = gameObject.AddComponent<AudioSource>();
-                newSource.playOnAwake = false;
-                newSource.loop = false;
-                newSource.outputAudioMixerGroup = audioSource.outputAudioMixerGroup;
-                audioSourcePool.Add(newSource);
+                CreateNewAudioSource();
             }
         }
         
@@ -69,6 +67,11 @@ namespace Game.Audio
         ///     Play an audio clip. Returns a sound ID that can be used to stop it later.
         /// </summary>
         public abstract int Play(AudioClip clip, float volume = 1.0f, bool loop = false);
+        
+        /// <summary>
+        ///     Play an audio by name. Returns a sound ID that can be used to stop it later.
+        /// </summary>
+        public abstract int Play(string soundName, float volume = 1.0f, bool loop = false);
         
         /// <summary>
         ///     Stop a specific sound by its ID
@@ -112,7 +115,20 @@ namespace Game.Audio
         }
         
         /// <summary>
-        ///     Find an available audio source from the pool
+        ///     Creates a new audio source and adds it to the pool
+        /// </summary>
+        protected AudioSource CreateNewAudioSource()
+        {
+            AudioSource newSource = gameObject.AddComponent<AudioSource>();
+            newSource.playOnAwake = false;
+            newSource.loop = false;
+            newSource.outputAudioMixerGroup = audioSource.outputAudioMixerGroup;
+            audioSourcePool.Add(newSource);
+            return newSource;
+        }
+        
+        /// <summary>
+        ///     Find an available audio source from the pool or create a new one if needed
         /// </summary>
         protected AudioSource GetAvailableAudioSource()
         {
@@ -125,8 +141,47 @@ namespace Game.Audio
                 }
             }
             
-            // If all sources are in use, use the oldest one
-            return audioSourcePool[0];
+            // If we reach the max sources limit, reuse an existing one
+            if (maxAudioSources > 0 && audioSourcePool.Count >= maxAudioSources)
+            {
+                // Find the one closest to completion
+                AudioSource oldestSource = audioSourcePool[0];
+                float highestPercentComplete = 0f;
+                
+                foreach (var source in audioSourcePool)
+                {
+                    if (source.clip != null && source.time > 0)
+                    {
+                        float percentComplete = source.time / source.clip.length;
+                        if (percentComplete > highestPercentComplete)
+                        {
+                            highestPercentComplete = percentComplete;
+                            oldestSource = source;
+                        }
+                    }
+                }
+                
+                // Clean up the existing reference to this source in activeSounds
+                int keyToRemove = -1;
+                foreach (var pair in activeSounds)
+                {
+                    if (pair.Value == oldestSource)
+                    {
+                        keyToRemove = pair.Key;
+                        break;
+                    }
+                }
+                
+                if (keyToRemove != -1)
+                {
+                    activeSounds.Remove(keyToRemove);
+                }
+                
+                return oldestSource;
+            }
+            
+            // If we still have room to grow, create a new audio source
+            return CreateNewAudioSource();
         }
         
         /// <summary>
