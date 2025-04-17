@@ -20,7 +20,7 @@ public class NewGameAnimator : MonoBehaviour
     public TextMeshProUGUI consoleText;
     public Image scanlineOverlay;
 
-    private float textTypeSpeed = 0.03f;
+    private float textTypeSpeed = 0.025f;
     private float lineDelay = 0.5f;
     private string gameVersion = "1.0.0";
     private float cursorBlinkSpeed = 0.5f;
@@ -209,7 +209,7 @@ public class NewGameAnimator : MonoBehaviour
 
     public void PlayTransition()
     {
-        AudioManager.Music.FadeOutMusic(fadeDuration + 2);
+        AudioManager.Music.FadeOutMusic(fadeDuration + 3);
         AudioManager.SFX.Play("start_new_game", 0.2f);
 
         // Activate transition screen and start fade to black
@@ -281,14 +281,16 @@ public class NewGameAnimator : MonoBehaviour
         if (scanlineOverlay != null)
         {
             AudioManager.Music.Play("ambient.computer_hum");
+            AudioManager.Music.Play("ambient.texture_2");
+            
             // Activate the overlay but set alpha to 0
             scanlineOverlay.gameObject.SetActive(true);
             Color startColor = scanlineOverlay.color;
             startColor.a = 0f;
             scanlineOverlay.color = startColor;
 
-            // Define the final subtle alpha (15/255 ≈ 0.059)
-            float targetAlpha = 15f / 255f;
+            // Define the final subtle alpha (7/255 ≈ 0.027) - more subtle than before
+            float targetAlpha = 7f / 255f;
 
             // Store the default shader values in case we can't get them from the material
             float originalIntensity = 0.5f;
@@ -547,6 +549,7 @@ public class NewGameAnimator : MonoBehaviour
         string deviceName = SystemInfo.deviceName;
 
         // Define boot messages with their types and colors
+        // Keep the original messages but with faster typing speed
         var bootMessages = new (string message, Color color, float duration, bool hasLoadingBar, bool isError, bool instantLoad)[]
         {
             ($"[BOOT] Purrine_AI-B1-08364142020", bootColor, 3f, false, false, false),
@@ -581,7 +584,6 @@ public class NewGameAnimator : MonoBehaviour
             // ("[PERF] Graphics API: " + SystemInfo.graphicsDeviceType, systemInfoColor, 0f, false, false, true),
             //("[PERF] Quality level: " + QualitySettings.GetQualityLevel(), systemInfoColor, 0f, false, false, true),
             ("[STATUS] Version: " + gameVersion + " (Build " + System.DateTime.Now.ToString("yyyyMMddHHmm") + ")", statusColor, 0.3f, false, false, true),
-            ("[STATUS] All systems nominal", statusColor, 0.4f, false, false, false),
             ("[LOG] Timestamp: " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), systemInfoColor, 0f, false, false, true),
             ("[READY] Completed initialization for: PURRINE_AI-B1-08364142025", readyColor, 0.6f, false, false, false)
         };
@@ -601,12 +603,18 @@ public class NewGameAnimator : MonoBehaviour
         consoleText.alignment = TextAlignmentOptions.TopLeft;  // Align to top left like a real terminal
         consoleText.lineSpacing = -15f;  // Tighten line spacing for a terminal look
 
-        yield return new WaitForSeconds(0.5f);  // Initial pause before starting
+        yield return new WaitForSeconds(0.3f);  // Initial pause before starting (shortened)
         
         AudioManager.SFX.Play("confirm_1", 0.3f);
 
+        // Track boot progress for visual effects
+        float overallProgress = 0f;
+
         foreach (var (message, color, duration, hasLoadingBar, isError, instantLoad) in bootMessages)
         {
+            // Update progress for each message (normalized 0-1)
+            overallProgress += 1f / bootMessages.Length;
+            
             // Set glitch intensity based on whether this is an error message
             if (shaderMaterial != null)
             {
@@ -643,7 +651,7 @@ public class NewGameAnimator : MonoBehaviour
                 }
 
                 // Short delay between instant messages for readability
-                yield return new WaitForSeconds(0.05f);
+                yield return new WaitForSeconds(0.02f); // Reduced from 0.05f
             }
             else
             {
@@ -685,8 +693,8 @@ public class NewGameAnimator : MonoBehaviour
                         AudioManager.SFX.Play("bong_1", 0.2f);
                     }
 
-                    // Variable typing speed with occasional brief pauses
-                    float typingVariation = Random.Range(0.8f, 1.2f);
+                    // Variable typing speed but faster on average
+                    float typingVariation = Random.Range(0.7f, 1.1f); // Reduced range
 
                     // Play sound effect when an error message is fully typed
                     if (i == 7 && message.StartsWith("[ERROR]"))
@@ -694,14 +702,17 @@ public class NewGameAnimator : MonoBehaviour
                         AudioManager.SFX.Play("negative_2", 0.3f);
                     }
 
+                    // Type faster for longer messages
+                    float speedMultiplier = message.Length > 30 ? 0.6f : 1.0f;
+                    
                     // Occasional slight pause during typing (feels more like real typing)
-                    if (Random.value < 0.05f && !isError)
+                    if (Random.value < 0.03f && !isError) // Reduced from 0.05f
                     {
-                        yield return new WaitForSeconds(textTypeSpeed * 3f);
+                        yield return new WaitForSeconds(textTypeSpeed * 2f); // Reduced from 3f
                     }
                     else
                     {
-                        yield return new WaitForSeconds(textTypeSpeed * typingVariation);
+                        yield return new WaitForSeconds(textTypeSpeed * typingVariation * speedMultiplier);
                     }
 
                     // For errors, randomly trigger small shader glitches during typing
@@ -724,20 +735,27 @@ public class NewGameAnimator : MonoBehaviour
                     consoleText.text += $"\n    <color=#{colorHex}>[";
                     int barLength = 20;
                     float totalElapsedTime = 0f;
-                    float targetTime = duration * 1.5f; // Make loading longer overall
+                    float targetTime = duration * 1.2f; // Slightly shorter loading time (was 1.5f)
                     int currentBars = 0;
+
+                    // Track which segments are filled for pulse effect
+                    bool[] filledSegments = new bool[barLength];
+                    
+                    // Pulse animation parameters
+                    float pulseSpeed = 8f;
+                    float pulseTime = 0f;
 
                     while (currentBars < barLength)
                     {
                         // Create variable loading speeds - sometimes fast, sometimes stalled
                         float progressSpeed = Random.value < 0.2f ?
-                            Random.Range(0.05f, 0.1f) :  // Slower progress (20% chance)
-                            Random.Range(0.2f, 0.4f);    // Normal progress (80% chance)
+                            Random.Range(0.05f, 0.08f) :  // Slower progress (20% chance)
+                            Random.Range(0.15f, 0.35f);   // Normal progress (80% chance) - faster than before
 
                         // Occasionally add multiple bars at once (progress spike)
-                        int barsToAdd = Random.value < 0.15f ?
-                            Random.Range(2, 4) : // Progress spike (15% chance)
-                            1;                   // Normal progress (85% chance)
+                        int barsToAdd = Random.value < 0.2f ? // Increased chance from 0.15f
+                            Random.Range(2, 5) : // Progress spike (20% chance) - can add more bars
+                            1;                   // Normal progress (80% chance)
 
                         // Ensure we don't exceed the total
                         barsToAdd = Mathf.Min(barsToAdd, barLength - currentBars);
@@ -746,6 +764,14 @@ public class NewGameAnimator : MonoBehaviour
                         {
                             string barSegment = new string('=', barsToAdd);
                             consoleText.text += barSegment;
+                            
+                            // Mark these segments as filled
+                            for (int i = 0; i < barsToAdd; i++)
+                            {
+                                if (currentBars + i < barLength)
+                                    filledSegments[currentBars + i] = true;
+                            }
+                            
                             currentBars += barsToAdd;
 
                             // Calculate progress percentage (0-100)
@@ -753,7 +779,16 @@ public class NewGameAnimator : MonoBehaviour
 
                             // Update the completion percentage
                             string textWithoutPercentage = consoleText.text;
-                            consoleText.text = $"{textWithoutPercentage}] {percentage}%";
+                            
+                            // Add pulsing animation to the loading text by varying brightness
+                            pulseTime += Time.deltaTime * pulseSpeed;
+                            float pulseValue = Mathf.PingPong(pulseTime, 0.4f) + 0.6f; // Oscillates between 0.6 and 1.0
+                            float hue, saturation, value;
+                            Color.RGBToHSV(color, out hue, out saturation, out value);
+                            Color pulseColor = Color.HSVToRGB(hue, saturation, value * pulseValue);
+                            string pulseColorHex = ColorUtility.ToHtmlStringRGB(pulseColor);
+                            
+                            consoleText.text = $"{textWithoutPercentage}] <color=#{pulseColorHex}>{percentage}%</color>";
 
                             // Wait based on progress speed
                             yield return new WaitForSeconds(progressSpeed);
@@ -772,9 +807,9 @@ public class NewGameAnimator : MonoBehaviour
                         }
 
                         // Sometimes add a brief pause (stall)
-                        if (Random.value < 0.1f && currentBars < barLength)
+                        if (Random.value < 0.08f && currentBars < barLength) // Reduced from 0.1f
                         {
-                            yield return new WaitForSeconds(Random.Range(0.2f, 0.5f));
+                            yield return new WaitForSeconds(Random.Range(0.1f, 0.3f)); // Reduced from 0.2f-0.5f
 
                             // During stalls, sometimes show a system message
                             if (Random.value < 0.3f)
@@ -783,7 +818,7 @@ public class NewGameAnimator : MonoBehaviour
                                     $"\n      <color=#888888>...{(Random.value < 0.5f ? "validating" : "processing")}</color>" :
                                     $"\n      <color=#888888>...{(Random.value < 0.5f ? "collecting" : "analyzing")}</color>";
                                 consoleText.text += stall;
-                                yield return new WaitForSeconds(0.3f);
+                                yield return new WaitForSeconds(0.2f); // Reduced from 0.3f
 
                                 // Remove the stall message
                                 consoleText.text = consoleText.text.Substring(0, consoleText.text.Length - stall.Length);
@@ -805,7 +840,14 @@ public class NewGameAnimator : MonoBehaviour
                     int endIndex = consoleText.text.LastIndexOf(']');
                     if (endIndex > 0 && endIndex < consoleText.text.Length)
                     {
-                        consoleText.text = consoleText.text.Substring(0, endIndex + 1) + " 100%</color>";
+                        // Add a success animation - quick color flash
+                        string successColorHex = ColorUtility.ToHtmlStringRGB(Color.Lerp(color, Color.white, 0.5f));
+                        consoleText.text = consoleText.text.Substring(0, endIndex + 1) + $" <color=#{successColorHex}>100%</color>";
+                        
+                        // Play a success sound
+                        AudioManager.SFX.Play("confirm_1", 0.2f);
+                        
+                        yield return new WaitForSeconds(0.1f);
                     }
                     else
                     {
@@ -838,7 +880,7 @@ public class NewGameAnimator : MonoBehaviour
             // Random delay between messages with occasional "system activity" indicators
             if (!instantLoad)
             {
-                float messageDelay = lineDelay + Random.Range(0f, 0.3f);
+                float messageDelay = lineDelay * 0.8f + Random.Range(0f, 0.2f); // Reduced delay
                 if (Random.value < 0.2f && !isError)
                 {
                     // Show a brief "thinking" indicator
@@ -854,6 +896,20 @@ public class NewGameAnimator : MonoBehaviour
                     yield return new WaitForSeconds(messageDelay);
                 }
             }
+            
+            // Add subtle visual feedback based on progress
+            if (scanlineOverlay != null && shaderMaterial != null)
+            {
+                // Gradually reduce scan line intensity as boot progresses - make more subtle
+                float scanlineAlpha = Mathf.Lerp(0.15f, 0.07f, overallProgress); // Reduced values for subtlety
+                Color overlayColor = scanlineOverlay.color;
+                overlayColor.a = scanlineAlpha;
+                scanlineOverlay.color = overlayColor;
+                
+                // Gradually reduce curvature as system stabilizes
+                shaderMaterial.SetFloat("_CurvatureX", Mathf.Lerp(baseCurvatureX * 1.5f, baseCurvatureX, overallProgress));
+                shaderMaterial.SetFloat("_CurvatureY", Mathf.Lerp(baseCurvatureY * 1.5f, baseCurvatureY, overallProgress));
+            }
         }
 
         // Reset glitch to base level
@@ -862,6 +918,9 @@ public class NewGameAnimator : MonoBehaviour
             StartCoroutine(TransitionGlitchIntensity(baseGlitchIntensity, 1.0f));
         }
 
+        // Final initialization success sound
+        AudioManager.SFX.Play("confirm_3", 0.4f);
+        
         // Add an extra line break for spacing
         consoleText.text += "\n";
         
@@ -874,6 +933,43 @@ public class NewGameAnimator : MonoBehaviour
         isTyping = false;  // End typing sequence
 
         AudioManager.SFX.Play("glass_5", 0.5f);
+        
+        // Add a subtle "ready" glow effect to the screen
+        if (transitionImage != null)
+        {
+            Color softGlow = new Color(0.1f, 0.3f, 0.1f, 0.05f);
+            transitionImage.color = softGlow;
+            float glowDuration = 0.5f;
+            float elapsedTime = 0f;
+            
+            while (elapsedTime < glowDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = elapsedTime / glowDuration;
+                
+                // Pulse glow effect
+                float pulse = Mathf.Sin(t * Mathf.PI * 2) * 0.5f + 0.5f;
+                transitionImage.color = new Color(softGlow.r, softGlow.g, softGlow.b, softGlow.a * pulse);
+                
+                yield return null;
+            }
+            
+            // Fade out glow
+            elapsedTime = 0f;
+            float fadeDuration = 0.5f;
+            
+            while (elapsedTime < fadeDuration)
+            {
+                elapsedTime += Time.deltaTime;
+                float t = elapsedTime / fadeDuration;
+                
+                transitionImage.color = Color.Lerp(softGlow, Color.clear, t);
+                
+                yield return null;
+            }
+            
+            transitionImage.color = Color.clear;
+        }
         
         // Force first update of the press key visibility
         UpdatePressKeyVisibility();
