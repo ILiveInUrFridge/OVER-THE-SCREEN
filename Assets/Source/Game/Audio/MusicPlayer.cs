@@ -19,7 +19,7 @@ namespace Game.Audio
     /// <summary>
     ///     Player responsible for background music
     /// </summary>
-    public class MusicPlayer : AudioPlayer
+    public class MusicPlayer : AudioPlayer, ILoggable
     {
         [Header("Music Settings")]
         [SerializeField] private float crossFadeDuration = 2.0f;
@@ -94,72 +94,98 @@ namespace Game.Audio
         }
         
         /// <summary>
-        ///     Play a music track, with crossfade if another track is already playing
-        ///     and optional fade in if no track is currently playing
+        ///     Play a music track, with optional fade in
+        ///     Multiple tracks can be played simultaneously
         /// </summary>
         public int Play(AudioClip clip, float volume = 1.0f, bool loop = true, float fadeIn = 0f)
         {
             if (clip == null) return -1;
             
-            // If same music is already playing, do nothing
-            if (currentMusic == clip)
-            {
-                return currentMusicID;
-            }
+            // Create a new audio source for this track
+            AudioSource source = GetAvailableAudioSource();
+            if (source == null) return -1;
             
-            // Stop previous music with crossfade if needed
-            if (currentMusicID >= 0)
+            // Set up the source
+            source.clip = clip;
+            source.loop = loop;
+            
+            // Generate a unique ID for this sound
+            int soundID = GenerateSoundID();
+            
+            // Apply fade in if requested
+            if (fadeIn > 0f)
             {
-                StartCoroutine(CrossFadeMusic(clip, volume, loop));
-                return currentMusicID; // Return the same ID since we're just changing the clip
+                source.volume = 0f;
+                source.Play();
+                StartCoroutine(FadeIn(source, volume, fadeIn));
             }
             else
             {
-                // No music playing, start immediately
-                int soundID = GenerateSoundID();
-                currentMusicID = soundID;
-                currentMusic = clip;
-                
-                AudioSource source = audioSource; // Always use the main audio source for music
-                source.clip = clip;
-                source.loop = loop;
-                
-                if (fadeIn > 0f)
-                {
-                    source.volume = 0f;
-                    source.Play();
-                    StartCoroutine(FadeIn(source, volume, fadeIn));
-                }
-                else
-                {
-                    source.volume = volume;
-                    source.Play();
-                }
-                
-                activeSounds[soundID] = source;
-                return soundID;
+                source.volume = volume;
+                source.Play();
             }
+            
+            // Track this sound
+            activeSounds[soundID] = source;
+            
+            return soundID;
         }
         
         /// <summary>
         ///     Play a music track by name
         /// </summary>
-        public int Play(string trackName)
+        public override int Play(string trackName, float volume = 1.0f, bool loop = true)
         {
-            return Play(trackName, 0f);
+            if (trackLookup.TryGetValue(trackName, out MusicTrack track))
+            {
+                // Special case: if volume is exactly 1.0f, it means the caller didn't specify a custom volume,
+                // so we should use the track's configured volume instead
+                float finalVolume = (volume == 1.0f) ? track.volume : volume;
+                
+                // Same for loop: if true (default), use track setting
+                bool finalLoop = (loop == true) ? track.loop : loop;
+                
+                return Play(track.clip, finalVolume, finalLoop, 0f);
+            }
+            
+            this.LogWarning($"Track '{trackName}' not found.");
+            return -1;
         }
         
         /// <summary>
         ///     Play a music track by name with optional fade in
+        ///     This overload is for backward compatibility
         /// </summary>
-        public int Play(string trackName, float fadeIn = 0f)
+        public int Play(string trackName, float fadeIn)
         {
             if (trackLookup.TryGetValue(trackName, out MusicTrack track))
             {
+                // Always use track's configured volume and loop setting with this overload
                 return Play(track.clip, track.volume, track.loop, fadeIn);
             }
             
-            Debug.LogWarning($"MusicPlayer: Track '{trackName}' not found.");
+            this.LogWarning($"Track '{trackName}' not found.");
+            return -1;
+        }
+        
+        /// <summary>
+        ///     Play a music track by name with custom volume, loop setting, and optional fade in
+        /// </summary>
+        public int Play(string trackName, float volume, bool loop, float fadeIn)
+        {
+            if (trackLookup.TryGetValue(trackName, out MusicTrack track))
+            {
+                // Special case: if volume is exactly 1.0f, it means the caller didn't specify a custom volume,
+                // so we should use the track's configured volume instead
+                float finalVolume = (volume == 1.0f) ? track.volume : volume;
+                
+                // Same for loop: if true (default), use track setting
+                bool finalLoop = (loop == true) ? track.loop : loop;
+                
+                return Play(track.clip, finalVolume, finalLoop, fadeIn);
+            }
+            
+            this.LogWarning($"MusicPlayer: Track '{trackName}' not found.");
             return -1;
         }
         
@@ -252,12 +278,25 @@ namespace Game.Audio
         /// </summary>
         private IEnumerator FadeIn(AudioSource source, float targetVolume, float duration)
         {
+            if (source == null || duration <= 0) {
+                if (source != null) {
+                    source.volume = targetVolume;
+                }
+                yield break;
+            }
+            
             float timer = 0;
+            float startVolume = source.volume;
             
             while (timer < duration)
             {
                 timer += Time.deltaTime;
-                source.volume = Mathf.Lerp(0f, targetVolume, timer / duration);
+                float t = timer / duration;
+                
+                // Use a smooth ease-in curve for more natural fade
+                float easedT = t * t * (3f - 2f * t); // Smoothstep formula
+                
+                source.volume = Mathf.Lerp(startVolume, targetVolume, easedT);
                 yield return null;
             }
             
@@ -291,10 +330,16 @@ namespace Game.Audio
         /// </summary>
         public void FadeOutMusic(float duration = 2.0f)
         {
-            if (currentMusicID >= 0)
+            // Fade out ALL active music sources
+            foreach (var pair in new Dictionary<int, AudioSource>(activeSounds))
             {
-                StartCoroutine(FadeOut(currentMusicID, duration));
+                int soundID = pair.Key;
+                StartCoroutine(FadeOut(soundID, duration));
             }
+            
+            // Reset tracking
+            currentMusicID = -1;
+            currentMusic = null;
         }
         
         /// <summary>
@@ -307,22 +352,37 @@ namespace Game.Audio
                 float startVolume = source.volume;
                 float timer = 0;
                 
-                while (timer < duration)
+                // Only proceed if source is actually playing
+                if (source.isPlaying)
                 {
-                    timer += Time.deltaTime;
-                    source.volume = Mathf.Lerp(startVolume, 0f, timer / duration);
-                    yield return null;
+                    // Perform the fade
+                    while (timer < duration)
+                    {
+                        timer += Time.deltaTime;
+                        float t = Mathf.Clamp01(timer / duration);
+                        
+                        // Use smoothstep for more natural fade
+                        float easedT = t * t * (3f - 2f * t);
+                        source.volume = Mathf.Lerp(startVolume, 0f, easedT);
+                        
+                        // Check if source is still valid and playing
+                        if (!source || !source.isPlaying)
+                            break;
+                            
+                        yield return null;
+                    }
+                    
+                    // Ensure we end at zero volume
+                    if (source && source.isPlaying)
+                    {
+                        source.volume = 0f;
+                        source.Stop();
+                    }
                 }
                 
-                source.Stop();
-                source.clip = null;
+                // Clean up
+                if (source) source.clip = null;
                 activeSounds.Remove(soundID);
-                
-                if (soundID == currentMusicID)
-                {
-                    currentMusicID = -1;
-                    currentMusic = null;
-                }
             }
         }
     }
