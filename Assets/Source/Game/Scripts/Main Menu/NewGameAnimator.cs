@@ -651,8 +651,9 @@ public class NewGameAnimator : MonoBehaviour
                 }
             }
 
-            // Add prefix with caret
-            consoleText.text += "> ";
+            // Add prefix with caret with explicit color to prevent inheriting previous text color
+            string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+            consoleText.text += $"<color=#{caretColorHex}>> </color>";
 
             // Convert color to hex for rich text
             string colorHex = ColorUtility.ToHtmlStringRGB(color);
@@ -662,8 +663,8 @@ public class NewGameAnimator : MonoBehaviour
                 // For instant loading messages, just add the whole text at once
                 consoleText.text += $"<color=#{colorHex}>{message}</color>\n";
 
-                // Add to history
-                consoleHistory.Add("> " + $"<color=#{colorHex}>{message}</color>");
+                // Add to history - now the caret is included in the explicit color
+                consoleHistory.Add($"<color=#{caretColorHex}>> </color>" + $"<color=#{colorHex}>{message}</color>");
 
                 // Trim if needed
                 if (consoleHistory.Count > maxConsoleLines)
@@ -884,8 +885,8 @@ public class NewGameAnimator : MonoBehaviour
                 }
                 else
                 {
-                    // Add to history if no loading bar
-                    consoleHistory.Add("> " + messageText);
+                    // Add to history if no loading bar - now with explicit caret color
+                    consoleHistory.Add($"<color=#{caretColorHex}>> </color>" + messageText);
                 }
 
                 // Add line break
@@ -1568,7 +1569,8 @@ public class NewGameAnimator : MonoBehaviour
             // Add the "Proceeding..." message with a different color (yellow/gold)
             Color proceedingColor = new Color(0.9f, 0.8f, 0.2f); // Gold/yellow color
             string proceedingMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(proceedingColor)}>Proceeding...</color>";
-            consoleText.text = currentText + "\n> " + proceedingMessage;
+            string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+            consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color>" + proceedingMessage;
             
             // Show cursor blinking at the end of the message
             StartCoroutine(BlinkCursorAfterProceeding(currentText, proceedingMessage));
@@ -1587,6 +1589,7 @@ public class NewGameAnimator : MonoBehaviour
         bool localCursorVisible = true;
         float elapsed = 0f;
         float totalTime = 1.5f; // Match the delay before shutdown
+        string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
         
         while (elapsed < totalTime)
         {
@@ -1596,11 +1599,11 @@ public class NewGameAnimator : MonoBehaviour
             // Update text with or without cursor
             if (localCursorVisible)
             {
-                consoleText.text = baseText + "\n> " + proceedingMessage + cursorChar;
+                consoleText.text = baseText + $"\n<color=#{caretColorHex}>> </color>" + proceedingMessage + cursorChar;
             }
             else
             {
-                consoleText.text = baseText + "\n> " + proceedingMessage;
+                consoleText.text = baseText + $"\n<color=#{caretColorHex}>> </color>" + proceedingMessage;
             }
             
             // Wait for blink interval
