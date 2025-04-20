@@ -1241,7 +1241,7 @@ public class NewGameAnimator : MonoBehaviour
             
             // Stage 1: Subtle instability (small flicker) - keep text visible
             PlayRandomGlitchSound(0.3f);
-            AudioManager.SFX.Play("pink_noise_2", 0.4f);
+            AudioManager.SFX.Play("pink_noise_2", 0.1f);
             
             // First subtle shader adjustment
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 1.5f);
@@ -1333,7 +1333,7 @@ public class NewGameAnimator : MonoBehaviour
         // Initial glitch sound
         PlayRandomGlitchSound(0.6f);
         
-        AudioManager.SFX.Play("pink_noise_2", 0.2f);
+        AudioManager.SFX.Play("pink_noise_2", 0.3f);
         
         // Let the sound play for a moment before effects start
         yield return new WaitForSeconds(0.1f);
@@ -2357,7 +2357,7 @@ public class NewGameAnimator : MonoBehaviour
         // Final system shutdown initiating
         DisplaySystemMessage("[SYS] Integration complete. Initiating full system startup...", systemInfoColor);
         
-        // Medium glitch effect
+        // Medium glitch effect with enhanced audio
         TriggerGlitchEffect(0.3f, 0.3f);
         
         yield return new WaitForSeconds(1.5f);
