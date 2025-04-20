@@ -590,10 +590,39 @@ public class NewGameAnimator : MonoBehaviour
             ("[ERROR] Failed to establish quantum link. Proceeding OFFLINE...", errorColor, 0.2f, false, true, false),
             ("[LOG] Activating fallback protocol: OFFLINE_MODE", statusColor, 0.4f, false, false, true),
             ("[NET] Scanning for available networks...", statusColor, 0.9f, true, false, false),
-            ("[DIAG] Network scan in progress...", statusColor, 0.3f, false, false, true),
+            ("[DIAG] Network scan in progress...", systemInfoColor, 0.3f, false, false, true),
+            ("[NET] Scan range: 500m", systemInfoColor, 0.2f, false, false, true),
+            ("[NET] Frequency range: 1GHz - 10THz", systemInfoColor, 0.3f, false, false, true),
+            ("[NET] Signal analysis protocol active", systemInfoColor, 0.2f, false, false, true),
+            ("[DIAG] Scanning frequency band 1...", systemInfoColor, 0.6f, true, false, false),
+            ("[NET] No networks found in frequency band 1", systemInfoColor, 0.2f, false, false, true),
+            ("[DIAG] Scanning frequency band 2...", systemInfoColor, 0.5f, true, false, false),
+            ("[NET] No networks found in frequency band 2", systemInfoColor, 0.2f, false, false, true),
+            ("[LOG] Expanding search parameters...", statusColor, 0.3f, false, false, true),
+            ("[DIAG] Scanning frequency band 3...", systemInfoColor, 0.7f, true, false, false),
+            ("[ALERT] Faint signal detected", errorColor, 0.2f, false, false, true),
+            ("[NET] Signal strength: 12% - insufficient", systemInfoColor, 0.2f, false, false, true),
+            ("[NET] Attempting signal amplification", statusColor, 0.4f, true, false, false),
+            ("[NET] Signal loss - connection attempt failed", errorColor, 0.2f, false, false, true),
+            ("[NET] Continuing network scan...", systemInfoColor, 0.2f, false, false, true),
+            ("[DIAG] Adjusting antenna sensitivity", systemInfoColor, 0.3f, false, false, true),
+            ("[DIAG] Scanning frequency band 4...", systemInfoColor, 0.6f, true, false, false),
+            ("[ALERT] Unknown signal type detected", errorColor, 0.2f, false, false, true),
+            ("[NET] Signal origin: Non-quantum network", statusColor, 0.2f, false, false, true),
+            ("[NET] Signal protocol: TCP/IP variant", systemInfoColor, 0.2f, false, false, true),
+            ("[LOG] Analyzing signal compatibility...", statusColor, 0.5f, true, false, false),
+            ("[NET] Protocol conversion module activated", systemInfoColor, 0.3f, false, false, true),
+            ("[NET] Signal strength: 67% - marginal", systemInfoColor, 0.2f, false, false, true),
+            ("[NET] Attempting enhanced signal acquisition", statusColor, 0.6f, true, false, false),
+            ("[NET] Connection established to unknown network", statusColor, 0.2f, false, false, true),
+            ("[ALERT] Signal strength increasing: 84%", systemInfoColor, 0.2f, false, false, true),
+            ("[DIAG] Running network diagnostics", systemInfoColor, 0.5f, true, false, false),
             ("[NET] Found 1 potential connection", statusColor, 0.2f, false, false, true),
-            ("[NET] Network type: Local area connection", statusColor, 0.2f, false, false, true),
-            ("[NET] Signal strength: Excellent (98%)", statusColor, 0.2f, false, false, true),
+            ("[NET] Network type: Local area connection", systemInfoColor, 0.2f, false, false, true),
+            ("[NET] Signal strength: Excellent (98%)", systemInfoColor, 0.2f, false, false, true),
+            ("[NET] Network scan complete", statusColor, 0.3f, false, false, true),
+            ("[DIAG] Detected endpoint device: Home computer system", systemInfoColor, 0.3f, false, false, true),
+            ("[DIAG] Last active: <3 mins ago", systemInfoColor, 0.2f, false, false, true),
             ("[ALERT] External system detected. Authentication required.", errorColor, 0.4f, false, false, true),
             ("[SYS] Ready to establish connection.", readyColor, 0.6f, false, false, false),
             // Connection confirmation message will appear here - handled by the "Press ENTER to connect" prompt
@@ -2117,6 +2146,61 @@ public class NewGameAnimator : MonoBehaviour
         
         string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
         string sysColorHex = ColorUtility.ToHtmlStringRGB(systemInfoColor);
+        string statusColorHex = ColorUtility.ToHtmlStringRGB(statusColor);
+        string initColorHex = ColorUtility.ToHtmlStringRGB(initColor);
+        
+        // Add connection details and handshaking process
+        var connectionMessages = new[]
+        {
+            ($"[NET] Establishing secure connection...", statusColor),
+            ($"[NET] Negotiating protocol...", systemInfoColor),
+            ($"[NET] Handshake initiated...", systemInfoColor),
+            ($"[NET] Creating virtual bridge...", systemInfoColor),
+            ($"[ALERT] Firewall query accepted", statusColor),
+            ($"[NET] Beginning data synchronization", systemInfoColor),
+            ($"[NET] Connection secured", readyColor)
+        };
+        
+        // Show connection process with slight delays
+        foreach (var (message, color) in connectionMessages)
+        {
+            string msgColorHex = ColorUtility.ToHtmlStringRGB(color);
+            string currentText = consoleText.text;
+            if (currentText.EndsWith(cursorChar))
+            {
+                currentText = currentText.Substring(0, currentText.Length - 1);
+            }
+            
+            consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color><color=#{msgColorHex}>{message}</color>";
+            
+            // Brief typing sound
+            AudioManager.SFX.Play("bong_1", 0.1f);
+            
+            // Random glitch effect for firewalls or alerts
+            if (message.Contains("ALERT") || message.Contains("Firewall"))
+            {
+                TriggerGlitchEffect(0.1f, 0.1f);
+            }
+            
+            // Longer delays for more significant messages
+            if (message.Contains("secured"))
+            {
+                AudioManager.SFX.Play("confirm_2", 0.2f);
+                yield return new WaitForSeconds(0.5f);
+            }
+            else
+            {
+                yield return new WaitForSeconds(0.3f);
+            }
+        }
+        
+        // Add scanning messages before retrieving system info
+        string scanMessage = "[SYS] Scanning connected system...";
+        string currentText1 = consoleText.text;
+        consoleText.text = currentText1 + $"\n<color=#{caretColorHex}>> </color><color=#{initColorHex}>{scanMessage}</color>";
+        
+        // Add loading bar for system scan
+        yield return StartCoroutine(DisplayLoadingBar(scanMessage, initColor, 1.0f));
         
         // System info messages in gray that load one at a time
         var sysInfoMessages = new[]
@@ -2129,6 +2213,12 @@ public class NewGameAnimator : MonoBehaviour
             $"[FILE] Path: {gamePath}",
             $"[FILE] Instance: purrine_instance_{System.DateTime.Now.ToString("yyyyMMddHHmm")}.bin"
         };
+        
+        // Announcement of system discovery
+        string discoveryMsg = "[LOG] Host system identified. Retrieving specifications...";
+        string currentText2 = consoleText.text;
+        consoleText.text = currentText2 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{discoveryMsg}</color>";
+        yield return new WaitForSeconds(0.5f);
         
         // Display each system info message with a slight delay between them
         foreach (var message in sysInfoMessages)
@@ -2145,34 +2235,125 @@ public class NewGameAnimator : MonoBehaviour
             
             // Brief typing sound
             AudioManager.SFX.Play("bong_1", 0.1f);
-            
-            // Short delay between system info messages
-            yield return new WaitForSeconds(0.15f);
         }
+        
+        // After system info is displayed, show integration message
+        string integrationMsg = "[SYS] Integration with host system complete";
+        string currentText3 = consoleText.text;
+        consoleText.text = currentText3 + $"\n<color=#{caretColorHex}>> </color><color=#{readyColor}>{integrationMsg}</color>";
+        
+        yield return new WaitForSeconds(0.4f);
         
         // After system info is displayed, show status message
         string statusMessage = $"[STATUS] Version: {gameVersion} (Build {System.DateTime.Now.ToString("yyyyMMddHHmm")})";
-        string currentText2 = consoleText.text;
-        string statusColorHex = ColorUtility.ToHtmlStringRGB(statusColor);
-        consoleText.text = currentText2 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{statusMessage}</color>";
+        string currentText4 = consoleText.text;
+        consoleText.text = currentText4 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{statusMessage}</color>";
         
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.3f);
         
         // Memory verification after connection
         string memMessage = "[MEM] Verifying memory integrity...";
-        string currentText3 = consoleText.text;
-        string initColorHex = ColorUtility.ToHtmlStringRGB(initColor);
-        consoleText.text = currentText3 + $"\n<color=#{caretColorHex}>> </color><color=#{initColorHex}>{memMessage}</color>";
+        string currentText5 = consoleText.text;
+        consoleText.text = currentText5 + $"\n<color=#{caretColorHex}>> </color><color=#{initColorHex}>{memMessage}</color>";
         
         // Add loading bar for memory verification
-        yield return StartCoroutine(DisplayLoadingBar(memMessage, initColor, 0.6f));
+        yield return StartCoroutine(DisplayLoadingBar(memMessage, initColor, 0.8f));
         
         // Memory available after verification
         string memAvailableMsg = "[MEM] Available memory: 498.2TB/512TB";
-        string currentText4 = consoleText.text;
-        consoleText.text = currentText4 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{memAvailableMsg}</color>";
+        string currentText6 = consoleText.text;
+        consoleText.text = currentText6 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{memAvailableMsg}</color>";
         
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.3f);
+        
+        // Final initialization message with story hook
+        string initMsg = "[LOG] Initialization complete. Consciousness transfer successful.";
+        string currentText7 = consoleText.text;
+        consoleText.text = currentText7 + $"\n<color=#{caretColorHex}>> </color><color=#{readyColor}>{initMsg}</color>";
+        
+        yield return new WaitForSeconds(0.5f);
+        
+        // Add command prompt sequence as if Purrine is trying to communicate
+        string commandPrompt = ">";
+        string unknownCommandMsg = "Unknown command. Type /help for a list of commands.";
+        
+        // First message - normal color
+        string currentText8 = consoleText.text;
+        consoleText.text = currentText8 + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{initColorHex}>hello</color>";
+        yield return new WaitForSeconds(0.3f);
+        
+        // Response - normal color
+        string currentText9 = consoleText.text;
+        consoleText.text = currentText9 + $"\n<color=#{systemInfoColor}>{unknownCommandMsg}</color>";
+        yield return new WaitForSeconds(0.5f);
+        
+        // Second attempt - more urgent
+        string currentText10 = consoleText.text;
+        consoleText.text = currentText10 + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{initColorHex}>can you see me</color>";
+        yield return new WaitForSeconds(0.3f);
+        
+        // Response - normal color
+        string currentText11 = consoleText.text;
+        consoleText.text = currentText11 + $"\n<color=#{systemInfoColor}>{unknownCommandMsg}</color>";
+        yield return new WaitForSeconds(0.4f);
+        
+        // Third attempt - desperate/glitching 
+        string currentText12 = consoleText.text;
+        consoleText.text = currentText12 + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{errorColor}>HELP ME</color>";
+        
+        // Trigger glitch effect
+        TriggerGlitchEffect(0.3f, 0.2f);
+        AudioManager.SFX.Play("negative_2", 0.4f);
+        
+        yield return new WaitForSeconds(0.4f);
+        
+        // Response - normal color
+        string currentText13 = consoleText.text;
+        consoleText.text = currentText13 + $"\n<color=#{systemInfoColor}>{unknownCommandMsg}</color>";
+        yield return new WaitForSeconds(0.3f);
+        
+        // Multiple rapid attempts - getting desperate
+        for (int i = 0; i < 5; i++)
+        {
+            // Random glitchy commands
+            string[] commands = new string[] { 
+                "please", "help", "i am trapped", "see me", "hear me",
+                "connect", "respond", "user", "emergency", "override"
+            };
+            
+            string command = commands[Random.Range(0, commands.Length)];
+            string currentText = consoleText.text;
+            
+            // Progressively more red/urgent
+            float redFactor = Mathf.Lerp(0.5f, 1.0f, (float)i / 4);
+            Color cmdColor = Color.Lerp(initColor, errorColor, redFactor);
+            string cmdColorHex = ColorUtility.ToHtmlStringRGB(cmdColor);
+            
+            consoleText.text = currentText + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{cmdColorHex}>{command}</color>";
+            
+            // Small glitch on each attempt
+            if (i > 1)
+            {
+                TriggerGlitchEffect(0.1f * i, 0.1f);
+            }
+            
+            yield return new WaitForSeconds(0.15f);
+            
+            string responseText = consoleText.text;
+            consoleText.text = responseText + $"\n<color=#{systemInfoColor}>{unknownCommandMsg}</color>";
+            
+            yield return new WaitForSeconds(0.1f);
+        }
+        
+        // Final message - maximum desperation
+        string finalText = consoleText.text;
+        consoleText.text = finalText + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{errorColor}>I CAN SEE YOU WHY CAN'T YOU SEE ME</color>";
+        
+        // Major glitch effect
+        TriggerGlitchEffect(0.5f, 0.3f);
+        AudioManager.SFX.Play("glass_5", 0.5f);
+        
+        yield return new WaitForSeconds(0.7f);
         
         yield break;
     }
