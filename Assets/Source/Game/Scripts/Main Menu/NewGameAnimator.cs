@@ -26,7 +26,7 @@ public class NewGameAnimator : MonoBehaviour
     private float cursorBlinkSpeed = 0.5f;
     private float scanlineSpeed = 0.1f;
     private float glitchChance = 0.1f;
-    private string pressAnyKeyMessage = "PRESS ANY KEY TO PROCEED";
+    private string pressAnyKeyMessage = "PRESS ENTER TO CONNECT";
     private int maxConsoleLines = 30; // Maximum number of lines to keep in the console
 
     [Header("Colors")]
@@ -120,13 +120,13 @@ public class NewGameAnimator : MonoBehaviour
 
     private void Update()
     {
-        if (canProceed && Input.anyKeyDown)
+        if (canProceed && (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)))
         {
             // Disable further input
             canProceed = false;
             
-            // Show "Proceeding..." message and start shutdown after delay
-            StartCoroutine(ShowProceedingMessage());
+            // Show "Connecting..." message and display system info after connection
+            StartCoroutine(ShowConnectionSuccessful());
         }
 
         // Update scanline effect
@@ -197,7 +197,7 @@ public class NewGameAnimator : MonoBehaviour
             baseText = baseText.Substring(0, pressKeyIndex);
         }
         
-        // Add the press key message
+        // Add the press key message with a highlight
         baseText += $"<color=#{ColorUtility.ToHtmlStringRGB(pressKeyColor)}>{pressAnyKeyMessage}</color>";
         
         // Add blinking cursor
@@ -575,16 +575,6 @@ public class NewGameAnimator : MonoBehaviour
         var bootMessages = new (string message, Color color, float duration, bool hasLoadingBar, bool isError, bool instantLoad)[]
         {
             ($"[BOOT] Purrine_AI-B1-08364142020", bootColor, 3f, false, false, false),
-            // System info messages in gray that load instantly like Windows CMD
-            ($"[SYS] OS: {osInfo}", systemInfoColor, 0f, false, false, true),
-            ($"[SYS] CPU: {cpuInfo}", systemInfoColor, 0f, false, false, true),
-            ($"[SYS] GPU: {gpuInfo}", systemInfoColor, 0f, false, false, true),
-            ($"[SYS] RAM: {ramInfo}", systemInfoColor, 0f, false, false, true),
-            ($"[SYS] DEVICE: {deviceName}", systemInfoColor, 0f, false, false, true),
-            ($"[FILE] Path: {gamePath}", systemInfoColor, 0f, false, false, true),
-            ($"[FILE] Instance: purrine_instance_{System.DateTime.Now.ToString("yyyyMMddHHmm")}.bin", systemInfoColor, 0f, false, false, true),
-            // ($"[HASH] Verifying system integrity...", initColor, 0.8f, true, false, false),
-            // ($"[SEC] Initializing security protocols...", initColor, 0.5f, true, false, false),
             ("[INIT] Loading neural networks...", initColor, 1.2f, true, false, false),
             ("[MEM] Allocating memory buffers...", initColor, 0.6f, true, false, true),
             ("[INIT] Calibrating sensors...", initColor, 0.8f, true, false, false),
@@ -599,15 +589,16 @@ public class NewGameAnimator : MonoBehaviour
             ("[INIT] Re-establishing quantum link...", initColor, 0.7f, true, false, false),
             ("[ERROR] Failed to establish quantum link. Proceeding OFFLINE...", errorColor, 0.2f, false, true, false),
             ("[LOG] Activating fallback protocol: OFFLINE_MODE", statusColor, 0.4f, false, false, true),
-            ("[MEM] Verifying memory integrity...", initColor, 0.6f, true, false, false),
-            ("[MEM] Available memory: 498.2TB/512TB", statusColor, 0.2f, false, false, true),
-            // ("[MEM] Cache optimized", statusColor, 0.2f, false, false, true),
-            ("[INIT] Loading user preferences...", initColor, 0.5f, true, false, false),
-            // ("[PERF] Graphics API: " + SystemInfo.graphicsDeviceType, systemInfoColor, 0f, false, false, true),
-            //("[PERF] Quality level: " + QualitySettings.GetQualityLevel(), systemInfoColor, 0f, false, false, true),
-            ("[STATUS] Version: " + gameVersion + " (Build " + System.DateTime.Now.ToString("yyyyMMddHHmm") + ")", statusColor, 0.3f, false, false, true),
+            ("[NET] Scanning for available networks...", statusColor, 0.9f, true, false, false),
+            ("[DIAG] Network scan in progress...", statusColor, 0.3f, false, false, true),
+            ("[NET] Found 1 potential connection", statusColor, 0.2f, false, false, true),
+            ("[NET] Network type: Local area connection", statusColor, 0.2f, false, false, true),
+            ("[NET] Signal strength: Excellent (98%)", statusColor, 0.2f, false, false, true),
+            ("[ALERT] External system detected. Authentication required.", errorColor, 0.4f, false, false, true),
+            ("[SYS] Ready to establish connection.", readyColor, 0.6f, false, false, false),
+            // Connection confirmation message will appear here - handled by the "Press ENTER to connect" prompt
+            // System info will appear after connection is confirmed
             ("[LOG] Timestamp: " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), systemInfoColor, 0f, false, false, true),
-            ("[READY] Completed initialization for: PURRINE_AI-B1-08364142025", readyColor, 0.6f, false, false, false)
         };
 
         // Clear console text at the start and remove cursor
@@ -1559,7 +1550,7 @@ public class NewGameAnimator : MonoBehaviour
                 currentText = currentText.Substring(0, currentText.Length - 1);
             }
             
-            // Remove the "PRESS ANY KEY TO PROCEED" message
+            // Remove the "PRESS ENTER TO CONNECT" message
             int pressKeyIndex = currentText.LastIndexOf(pressAnyKeyMessage);
             if (pressKeyIndex >= 0)
             {
@@ -2023,5 +2014,308 @@ public class NewGameAnimator : MonoBehaviour
     {
         public float CreationTime;
         public float Lifetime;
+    }
+
+    // New method to show connection successful and display connected system info
+    private IEnumerator ShowConnectionSuccessful()
+    {
+        // Play connection sound
+        AudioManager.SFX.Play("confirm_2", 0.3f);
+        
+        if (consoleText != null)
+        {
+            // Get current text and ensure cursor is removed if present
+            string currentText = consoleText.text;
+            if (currentText.EndsWith(cursorChar))
+            {
+                currentText = currentText.Substring(0, currentText.Length - 1);
+            }
+            
+            // Remove the connection prompt message
+            int pressKeyIndex = currentText.LastIndexOf(pressAnyKeyMessage);
+            if (pressKeyIndex >= 0)
+            {
+                currentText = currentText.Substring(0, pressKeyIndex);
+            }
+            
+            // Add the "Connecting..." message with a color
+            Color connectingColor = statusColor; // Blue status color
+            string connectingMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(connectingColor)}>Connecting...</color>";
+            string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+            consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color>" + connectingMessage;
+            
+            // Show connecting message with blinking cursor
+            StartCoroutine(BlinkCursorDuringConnecting(currentText, connectingMessage));
+            
+            // Brief pause while "Connecting..."
+            yield return new WaitForSeconds(1.0f);
+
+            // Connection established sound
+            AudioManager.SFX.Play("confirm_3", 0.3f);
+            
+            // Now display a successful connection message
+            string successMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(readyColor)}>[SUCCESS] Connection established.</color>";
+            currentText = consoleText.text;
+            if (currentText.EndsWith(cursorChar))
+            {
+                currentText = currentText.Substring(0, currentText.Length - 1);
+            }
+            consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color>" + successMessage;
+            
+            yield return new WaitForSeconds(0.5f);
+            
+            // Display system information of the connected PC
+            yield return StartCoroutine(DisplayConnectedSystemInfo());
+            
+            // Wait a moment before starting the shutdown sequence
+            yield return new WaitForSeconds(1.0f);
+        }
+        
+        // Start power-off sequence
+        StartCoroutine(MonitorPowerOffSequence());
+    }
+    
+    // Helper method to display the blinking cursor during connecting
+    private IEnumerator BlinkCursorDuringConnecting(string baseText, string connectingMessage)
+    {
+        bool localCursorVisible = true;
+        float elapsed = 0f;
+        float totalTime = 1.0f; // Match the delay during connecting
+        string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+        
+        while (elapsed < totalTime)
+        {
+            // Toggle cursor visibility
+            localCursorVisible = !localCursorVisible;
+            
+            // Update text with or without cursor
+            if (localCursorVisible)
+            {
+                consoleText.text = baseText + $"\n<color=#{caretColorHex}>> </color>" + connectingMessage + cursorChar;
+            }
+            else
+            {
+                consoleText.text = baseText + $"\n<color=#{caretColorHex}>> </color>" + connectingMessage;
+            }
+            
+            // Wait for blink interval
+            yield return new WaitForSeconds(cursorBlinkSpeed);
+            elapsed += cursorBlinkSpeed;
+        }
+    }
+    
+    // Display the connected system information
+    private IEnumerator DisplayConnectedSystemInfo()
+    {
+        // Get real system information
+        string osInfo = SystemInfo.operatingSystem;
+        string cpuInfo = SystemInfo.processorType + " (" + SystemInfo.processorCount + " cores)";
+        string gpuInfo = SystemInfo.graphicsDeviceName + " (" + SystemInfo.graphicsMemorySize + "MB)";
+        string ramInfo = (SystemInfo.systemMemorySize / 1024f).ToString("F1") + "GB";
+        string gamePath = Application.dataPath;
+        string deviceName = SystemInfo.deviceName;
+        
+        string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+        string sysColorHex = ColorUtility.ToHtmlStringRGB(systemInfoColor);
+        
+        // System info messages in gray that load one at a time
+        var sysInfoMessages = new[]
+        {
+            $"[SYS] OS: {osInfo}",
+            $"[SYS] CPU: {cpuInfo}",
+            $"[SYS] GPU: {gpuInfo}",
+            $"[SYS] RAM: {ramInfo}",
+            $"[SYS] DEVICE: {deviceName}",
+            $"[FILE] Path: {gamePath}",
+            $"[FILE] Instance: purrine_instance_{System.DateTime.Now.ToString("yyyyMMddHHmm")}.bin"
+        };
+        
+        // Display each system info message with a slight delay between them
+        foreach (var message in sysInfoMessages)
+        {
+            // Get current text
+            string currentText = consoleText.text;
+            if (currentText.EndsWith(cursorChar))
+            {
+                currentText = currentText.Substring(0, currentText.Length - 1);
+            }
+            
+            // Add the system info message
+            consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color><color=#{sysColorHex}>{message}</color>";
+            
+            // Brief typing sound
+            AudioManager.SFX.Play("bong_1", 0.1f);
+            
+            // Short delay between system info messages
+            yield return new WaitForSeconds(0.15f);
+        }
+        
+        // After system info is displayed, show status message
+        string statusMessage = $"[STATUS] Version: {gameVersion} (Build {System.DateTime.Now.ToString("yyyyMMddHHmm")})";
+        string currentText2 = consoleText.text;
+        string statusColorHex = ColorUtility.ToHtmlStringRGB(statusColor);
+        consoleText.text = currentText2 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{statusMessage}</color>";
+        
+        yield return new WaitForSeconds(0.2f);
+        
+        // Memory verification after connection
+        string memMessage = "[MEM] Verifying memory integrity...";
+        string currentText3 = consoleText.text;
+        string initColorHex = ColorUtility.ToHtmlStringRGB(initColor);
+        consoleText.text = currentText3 + $"\n<color=#{caretColorHex}>> </color><color=#{initColorHex}>{memMessage}</color>";
+        
+        // Add loading bar for memory verification
+        yield return StartCoroutine(DisplayLoadingBar(memMessage, initColor, 0.6f));
+        
+        // Memory available after verification
+        string memAvailableMsg = "[MEM] Available memory: 498.2TB/512TB";
+        string currentText4 = consoleText.text;
+        consoleText.text = currentText4 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{memAvailableMsg}</color>";
+        
+        yield return new WaitForSeconds(0.2f);
+        
+        yield break;
+    }
+    
+    // Helper method to display a loading bar for a message
+    private IEnumerator DisplayLoadingBar(string message, Color color, float duration)
+    {
+        string colorHex = ColorUtility.ToHtmlStringRGB(color);
+        string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+        string readyColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+        
+        // Get current text
+        string currentText = consoleText.text;
+        
+        // Add a line break and start the loading bar on a new line
+        consoleText.text += $"\n    <color=#{colorHex}>[";
+        int barLength = 20;
+        float totalElapsedTime = 0f;
+        float targetTime = duration * 1.2f;
+        int currentBars = 0;
+        
+        // Track which segments are filled for pulse effect
+        bool[] filledSegments = new bool[barLength];
+        
+        // Pulse animation parameters
+        float pulseSpeed = 8f;
+        float pulseTime = 0f;
+        
+        while (currentBars < barLength)
+        {
+            // Create variable loading speeds
+            float progressSpeed = Random.value < 0.2f ?
+                Random.Range(0.05f, 0.08f) :  // Slower progress (20% chance)
+                Random.Range(0.15f, 0.35f);   // Normal progress (80% chance)
+                
+            // Occasionally add multiple bars at once
+            int barsToAdd = Random.value < 0.2f ?
+                Random.Range(2, 5) : // Progress spike (20% chance)
+                1;                   // Normal progress (80% chance)
+                
+            // Ensure we don't exceed the total
+            barsToAdd = Mathf.Min(barsToAdd, barLength - currentBars);
+            
+            if (barsToAdd > 0)
+            {
+                string barSegment = new string('=', barsToAdd);
+                consoleText.text += barSegment;
+                
+                // Mark these segments as filled
+                for (int i = 0; i < barsToAdd; i++)
+                {
+                    if (currentBars + i < barLength)
+                        filledSegments[currentBars + i] = true;
+                }
+                
+                currentBars += barsToAdd;
+                
+                // Calculate progress percentage
+                int percentage = Mathf.RoundToInt((float)currentBars / barLength * 100f);
+                
+                // Update the completion percentage
+                string textWithoutPercentage = consoleText.text;
+                
+                // Add pulsing animation
+                pulseTime += Time.deltaTime * pulseSpeed;
+                float pulseValue = Mathf.PingPong(pulseTime, 0.4f) + 0.6f;
+                float hue, saturation, value;
+                Color.RGBToHSV(color, out hue, out saturation, out value);
+                Color pulseColor = Color.HSVToRGB(hue, saturation, value * pulseValue);
+                string pulseColorHex = ColorUtility.ToHtmlStringRGB(pulseColor);
+                
+                consoleText.text = $"{textWithoutPercentage}] <color=#{pulseColorHex}>{percentage}%</color>";
+                
+                // Wait based on progress speed
+                yield return new WaitForSeconds(progressSpeed);
+                
+                // Random chance for a small glitch during loading
+                if (Random.value < 0.08f && shaderMaterial != null)
+                {
+                    TriggerGlitchEffect(Random.Range(0.1f, 0.2f), 0.05f);
+                }
+                
+                // Remove the percentage for next update if not complete
+                if (currentBars < barLength)
+                {
+                    consoleText.text = textWithoutPercentage;
+                }
+            }
+            
+            // Occasionally add a brief pause
+            if (Random.value < 0.08f && currentBars < barLength)
+            {
+                yield return new WaitForSeconds(Random.Range(0.1f, 0.3f));
+                
+                // During pauses, sometimes show a system message
+                if (Random.value < 0.3f)
+                {
+                    string stall = currentBars > barLength / 2 ?
+                        $"\n      <color=#888888>...{(Random.value < 0.5f ? "validating" : "processing")}</color>" :
+                        $"\n      <color=#888888>...{(Random.value < 0.5f ? "collecting" : "analyzing")}</color>";
+                    consoleText.text += stall;
+                    yield return new WaitForSeconds(0.2f);
+                    
+                    // Remove the stall message
+                    consoleText.text = consoleText.text.Substring(0, consoleText.text.Length - stall.Length);
+                }
+            }
+            
+            // Ensure we eventually complete
+            totalElapsedTime += Time.deltaTime + progressSpeed;
+            if (totalElapsedTime >= targetTime && currentBars < barLength)
+            {
+                // Force completion if taking too long
+                string remainingBars = new string('=', barLength - currentBars);
+                consoleText.text += remainingBars;
+                currentBars = barLength;
+            }
+        }
+        
+        // Ensure we show 100% at the end
+        int endIndex = consoleText.text.LastIndexOf(']');
+        if (endIndex > 0 && endIndex < consoleText.text.Length)
+        {
+            // Add a success animation
+            string successColorHex = ColorUtility.ToHtmlStringRGB(Color.Lerp(color, Color.white, 0.5f));
+            consoleText.text = consoleText.text.Substring(0, endIndex + 1) + $" <color=#{successColorHex}>100%</color>";
+            
+            // Play a success sound
+            AudioManager.SFX.Play("confirm_1", 0.2f);
+            
+            yield return new WaitForSeconds(0.1f);
+        }
+        else
+        {
+            consoleText.text += "] 100%</color>";
+        }
+        
+        // Display a completion message
+        consoleText.text += $"\n<color=#{readyColorHex}>[OK]</color> <color=#{colorHex}>{message}</color>";
+        
+        // Add line break
+        consoleText.text += "\n";
+        
+        yield break;
     }
 }
