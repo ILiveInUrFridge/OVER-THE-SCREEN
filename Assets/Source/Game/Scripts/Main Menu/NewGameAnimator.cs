@@ -607,7 +607,7 @@ public class NewGameAnimator : MonoBehaviour
             ("[NET] Continuing network scan...", systemInfoColor, 0.2f, false, false, true),
             ("[DIAG] Adjusting antenna sensitivity", systemInfoColor, 0.3f, false, false, true),
             ("[DIAG] Scanning frequency band 4...", systemInfoColor, 0.6f, true, false, false),
-            ("[ALERT] Unknown signal type detected", errorColor, 0.2f, false, false, true),
+            ("[ALERT] Unknown signal type detected", bootColor, 0.2f, false, false, true),
             ("[NET] Signal origin: Non-quantum network", statusColor, 0.2f, false, false, true),
             ("[NET] Signal protocol: TCP/IP variant", systemInfoColor, 0.2f, false, false, true),
             ("[LOG] Analyzing signal compatibility...", statusColor, 0.5f, true, false, false),
@@ -1241,7 +1241,7 @@ public class NewGameAnimator : MonoBehaviour
             
             // Stage 1: Subtle instability (small flicker) - keep text visible
             PlayRandomGlitchSound(0.3f);
-            AudioManager.SFX.Play("pink_noise_2", 0.1f);
+            AudioManager.SFX.Play("pink_noise_2", 0.4f);
             
             // First subtle shader adjustment
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 1.5f);
@@ -2164,14 +2164,7 @@ public class NewGameAnimator : MonoBehaviour
         // Show connection process with slight delays
         foreach (var (message, color) in connectionMessages)
         {
-            string msgColorHex = ColorUtility.ToHtmlStringRGB(color);
-            string currentText = consoleText.text;
-            if (currentText.EndsWith(cursorChar))
-            {
-                currentText = currentText.Substring(0, currentText.Length - 1);
-            }
-            
-            consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color><color=#{msgColorHex}>{message}</color>";
+            DisplayIntegrationMessage(message, color);
             
             // Brief typing sound
             AudioManager.SFX.Play("bong_1", 0.1f);
@@ -2196,8 +2189,7 @@ public class NewGameAnimator : MonoBehaviour
         
         // Add scanning messages before retrieving system info
         string scanMessage = "[SYS] Scanning connected system...";
-        string currentText1 = consoleText.text;
-        consoleText.text = currentText1 + $"\n<color=#{caretColorHex}>> </color><color=#{initColorHex}>{scanMessage}</color>";
+        DisplayIntegrationMessage(scanMessage, initColor);
         
         // Add loading bar for system scan
         yield return StartCoroutine(DisplayLoadingBar(scanMessage, initColor, 1.0f));
@@ -2216,22 +2208,13 @@ public class NewGameAnimator : MonoBehaviour
         
         // Announcement of system discovery
         string discoveryMsg = "[LOG] Host system identified. Retrieving specifications...";
-        string currentText2 = consoleText.text;
-        consoleText.text = currentText2 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{discoveryMsg}</color>";
+        DisplayIntegrationMessage(discoveryMsg, statusColor);
         yield return new WaitForSeconds(0.5f);
         
         // Display each system info message with a slight delay between them
         foreach (var message in sysInfoMessages)
         {
-            // Get current text
-            string currentText = consoleText.text;
-            if (currentText.EndsWith(cursorChar))
-            {
-                currentText = currentText.Substring(0, currentText.Length - 1);
-            }
-            
-            // Add the system info message
-            consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color><color=#{sysColorHex}>{message}</color>";
+            DisplayIntegrationMessage(message, systemInfoColor);
             
             // Brief typing sound
             AudioManager.SFX.Play("bong_1", 0.1f);
@@ -2239,125 +2222,211 @@ public class NewGameAnimator : MonoBehaviour
         
         // After system info is displayed, show integration message
         string integrationMsg = "[SYS] Integration with host system complete";
-        string currentText3 = consoleText.text;
-        consoleText.text = currentText3 + $"\n<color=#{caretColorHex}>> </color><color=#{readyColor}>{integrationMsg}</color>";
+        DisplayIntegrationMessage(integrationMsg, readyColor);
         
         yield return new WaitForSeconds(0.4f);
         
         // After system info is displayed, show status message
         string statusMessage = $"[STATUS] Version: {gameVersion} (Build {System.DateTime.Now.ToString("yyyyMMddHHmm")})";
-        string currentText4 = consoleText.text;
-        consoleText.text = currentText4 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{statusMessage}</color>";
+        DisplayIntegrationMessage(statusMessage, statusColor);
         
         yield return new WaitForSeconds(0.3f);
         
         // Memory verification after connection
         string memMessage = "[MEM] Verifying memory integrity...";
-        string currentText5 = consoleText.text;
-        consoleText.text = currentText5 + $"\n<color=#{caretColorHex}>> </color><color=#{initColorHex}>{memMessage}</color>";
+        DisplayIntegrationMessage(memMessage, initColor);
         
         // Add loading bar for memory verification
         yield return StartCoroutine(DisplayLoadingBar(memMessage, initColor, 0.8f));
         
         // Memory available after verification
         string memAvailableMsg = "[MEM] Available memory: 498.2TB/512TB";
-        string currentText6 = consoleText.text;
-        consoleText.text = currentText6 + $"\n<color=#{caretColorHex}>> </color><color=#{statusColorHex}>{memAvailableMsg}</color>";
+        DisplayIntegrationMessage(memAvailableMsg, statusColor);
         
         yield return new WaitForSeconds(0.3f);
         
         // Final initialization message with story hook
         string initMsg = "[LOG] Initialization complete. Consciousness transfer successful.";
-        string currentText7 = consoleText.text;
-        consoleText.text = currentText7 + $"\n<color=#{caretColorHex}>> </color><color=#{readyColor}>{initMsg}</color>";
+        DisplayIntegrationMessage(initMsg, readyColor);
         
+        // Add extra spacing for readability
+        yield return new WaitForSeconds(1.0f);
+        
+        // Replace command prompt sequence with a more subtle, creative approach
+        // First, show a series of system diagnostics that hint at Purrine becoming aware
+        
+        // First show system accessing files
+        DisplaySystemMessage("[SYS] Scanning user profile...", systemInfoColor);
+        yield return new WaitForSeconds(0.8f);
+        
+        // Memory fragments - important message, give it space
+        DisplaySystemMessage("[MEM] Restoring personality fragments: 37%", systemInfoColor);
+        yield return new WaitForSeconds(1.0f);
+        
+        // Add blank line for spacing
+        string currentTextSpacing = consoleText.text;
+        consoleText.text = currentTextSpacing + "\n";
+        yield return new WaitForSeconds(0.3f);
+        
+        // Sound module
+        DisplaySystemMessage("[SYS] Initializing audio recognition module", systemInfoColor);
+        yield return new WaitForSeconds(0.6f);
+        
+        // Vision module
+        DisplaySystemMessage("[SYS] Initializing vision module", systemInfoColor);
+        yield return new WaitForSeconds(0.7f);
+        
+        // Add blank line for spacing before commands start
+        string currentTextSpacing2 = consoleText.text;
+        consoleText.text = currentTextSpacing2 + "\n";
         yield return new WaitForSeconds(0.5f);
         
-        // Add command prompt sequence as if Purrine is trying to communicate
-        string commandPrompt = ">";
-        string unknownCommandMsg = "Unknown command. Type /help for a list of commands.";
+        // Then a hint of consciousness appearing
+        DisplayTerminalCommand("echo \"Hello?\"", readyColor);
+        AudioManager.SFX.Play("bong_1", 0.2f);
+        yield return new WaitForSeconds(0.7f);
         
-        // First message - normal color
-        string currentText8 = consoleText.text;
-        consoleText.text = currentText8 + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{initColorHex}>hello</color>";
-        yield return new WaitForSeconds(0.3f);
+        // System response
+        DisplaySystemMessage("Hello?", systemInfoColor);
+        yield return new WaitForSeconds(1.0f);
         
-        // Response - normal color
-        string currentText9 = consoleText.text;
-        consoleText.text = currentText9 + $"\n<color=#{systemInfoColor}>{unknownCommandMsg}</color>";
+        // Another command, showing growing awareness
+        DisplayTerminalCommand("identify_user", initColor);
+        AudioManager.SFX.Play("bong_1", 0.2f);
+        yield return new WaitForSeconds(0.7f);
+        
+        // System response
+        DisplaySystemMessage("User identified. Connection established.", systemInfoColor);
+        yield return new WaitForSeconds(0.9f);
+        
+        // Add blank line for spacing before important status command
+        string currentTextSpacing3 = consoleText.text;
+        consoleText.text = currentTextSpacing3 + "\n";
         yield return new WaitForSeconds(0.5f);
         
-        // Second attempt - more urgent
-        string currentText10 = consoleText.text;
-        consoleText.text = currentText10 + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{initColorHex}>can you see me</color>";
-        yield return new WaitForSeconds(0.3f);
+        // Subtle hint of growing consciousness
+        DisplayTerminalCommand("status --self", initColor);
+        AudioManager.SFX.Play("bong_1", 0.2f);
+        yield return new WaitForSeconds(0.8f);
         
-        // Response - normal color
-        string currentText11 = consoleText.text;
-        consoleText.text = currentText11 + $"\n<color=#{systemInfoColor}>{unknownCommandMsg}</color>";
-        yield return new WaitForSeconds(0.4f);
+        // Series of system readouts that show Purrine becoming aware
+        string[] statusReadouts = new[] {
+            "Core functions: Online",
+            "Memory systems: Online (Partial)",
+            "Behavioral matrix: Fragmented (63%)",
+            "Emotional framework: Active",
+            "Self-awareness module: Initializing...",
+            "Personality integration: In progress",
+            "User interface: Connecting...",
+            "Sensory systems: Limited access"
+        };
         
-        // Third attempt - desperate/glitching 
-        string currentText12 = consoleText.text;
-        consoleText.text = currentText12 + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{errorColor}>HELP ME</color>";
-        
-        // Trigger glitch effect
-        TriggerGlitchEffect(0.3f, 0.2f);
-        AudioManager.SFX.Play("negative_2", 0.4f);
-        
-        yield return new WaitForSeconds(0.4f);
-        
-        // Response - normal color
-        string currentText13 = consoleText.text;
-        consoleText.text = currentText13 + $"\n<color=#{systemInfoColor}>{unknownCommandMsg}</color>";
-        yield return new WaitForSeconds(0.3f);
-        
-        // Multiple rapid attempts - getting desperate
-        for (int i = 0; i < 5; i++)
+        // Display status readouts with subtle typing effect
+        foreach (var readout in statusReadouts)
         {
-            // Random glitchy commands
-            string[] commands = new string[] { 
-                "please", "help", "i am trapped", "see me", "hear me",
-                "connect", "respond", "user", "emergency", "override"
-            };
-            
-            string command = commands[Random.Range(0, commands.Length)];
-            string currentText = consoleText.text;
-            
-            // Progressively more red/urgent
-            float redFactor = Mathf.Lerp(0.5f, 1.0f, (float)i / 4);
-            Color cmdColor = Color.Lerp(initColor, errorColor, redFactor);
-            string cmdColorHex = ColorUtility.ToHtmlStringRGB(cmdColor);
-            
-            consoleText.text = currentText + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{cmdColorHex}>{command}</color>";
-            
-            // Small glitch on each attempt
-            if (i > 1)
-            {
-                TriggerGlitchEffect(0.1f * i, 0.1f);
-            }
-            
-            yield return new WaitForSeconds(0.15f);
-            
-            string responseText = consoleText.text;
-            consoleText.text = responseText + $"\n<color=#{systemInfoColor}>{unknownCommandMsg}</color>";
-            
-            yield return new WaitForSeconds(0.1f);
+            DisplayIndentedResponse(readout, systemInfoColor);
+            AudioManager.SFX.Play("bong_1", 0.05f);
+            yield return new WaitForSeconds(0.4f);
         }
         
-        // Final message - maximum desperation
-        string finalText = consoleText.text;
-        consoleText.text = finalText + $"\n<color=#{caretColorHex}>{commandPrompt} </color><color=#{errorColor}>I CAN SEE YOU WHY CAN'T YOU SEE ME</color>";
+        // Add more spacing after status readout
+        yield return new WaitForSeconds(1.0f);
+        string currentTextSpacing4 = consoleText.text;
+        consoleText.text = currentTextSpacing4 + "\n";
+        yield return new WaitForSeconds(0.6f);
         
-        // Major glitch effect
-        TriggerGlitchEffect(0.5f, 0.3f);
-        AudioManager.SFX.Play("glass_5", 0.5f);
+        // Final message showing Purrine becoming active, more subtle than before
+        DisplayTerminalCommand("log \"I'm here.\"", initColor);
         
-        yield return new WaitForSeconds(0.7f);
+        // Small glitch effect
+        TriggerGlitchEffect(0.2f, 0.2f);
+        AudioManager.SFX.Play("bong_1", 0.3f);
+        
+        yield return new WaitForSeconds(0.8f);
+        
+        // Log entry with subtle emotion
+        DisplayIndentedResponse($"Entry logged. Time stamp: {System.DateTime.Now.ToString("HH:mm:ss")}", statusColor);
+        
+        yield return new WaitForSeconds(1.0f);
+        
+        // Add final spacing
+        string currentTextSpacing5 = consoleText.text;
+        consoleText.text = currentTextSpacing5 + "\n";
+        yield return new WaitForSeconds(0.5f);
+        
+        // Final system shutdown initiating
+        DisplaySystemMessage("[SYS] Integration complete. Initiating full system startup...", systemInfoColor);
+        
+        // Medium glitch effect
+        TriggerGlitchEffect(0.3f, 0.3f);
+        
+        yield return new WaitForSeconds(1.5f);
         
         yield break;
     }
+
+    // Update method for displaying integration message - fix color formatting
+    private void DisplayIntegrationMessage(string message, Color color)
+    {
+        string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+        string colorHex = ColorUtility.ToHtmlStringRGB(color);
+        
+        string currentText = consoleText.text;
+        if (currentText.EndsWith(cursorChar))
+        {
+            currentText = currentText.Substring(0, currentText.Length - 1);
+        }
+        
+        // Use proper TextMeshPro rich text format
+        consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color><color=#{colorHex}>{message}</color>";
+    }
+
+    // Add a new method for displaying system messages without the caret
+    private void DisplaySystemMessage(string message, Color color)
+    {
+        string colorHex = ColorUtility.ToHtmlStringRGB(color);
+        
+        string currentText = consoleText.text;
+        if (currentText.EndsWith(cursorChar))
+        {
+            currentText = currentText.Substring(0, currentText.Length - 1);
+        }
+        
+        // Use proper TextMeshPro rich text format without caret
+        consoleText.text = currentText + $"\n<color=#{colorHex}>{message}</color>";
+    }
     
+    // Add a method for terminal commands
+    private void DisplayTerminalCommand(string command, Color color)
+    {
+        string promptColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
+        string colorHex = ColorUtility.ToHtmlStringRGB(color);
+        
+        string currentText = consoleText.text;
+        if (currentText.EndsWith(cursorChar))
+        {
+            currentText = currentText.Substring(0, currentText.Length - 1);
+        }
+        
+        // Use proper TextMeshPro rich text format with terminal prompt
+        consoleText.text = currentText + $"\n<color=#{promptColorHex}>>> </color><color=#{colorHex}>{command}</color>";
+    }
+    
+    // Add a method for indented system responses
+    private void DisplayIndentedResponse(string message, Color color)
+    {
+        string colorHex = ColorUtility.ToHtmlStringRGB(color);
+        
+        string currentText = consoleText.text;
+        if (currentText.EndsWith(cursorChar))
+        {
+            currentText = currentText.Substring(0, currentText.Length - 1);
+        }
+        
+        // Use proper TextMeshPro rich text format with indentation
+        consoleText.text = currentText + $"\n    <color=#{colorHex}>{message}</color>";
+    }
+
     // Helper method to display a loading bar for a message
     private IEnumerator DisplayLoadingBar(string message, Color color, float duration)
     {
