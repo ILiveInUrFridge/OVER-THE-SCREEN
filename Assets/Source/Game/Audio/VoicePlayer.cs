@@ -7,43 +7,42 @@ using Utilities;
 namespace Game.Audio
 {
     [System.Serializable]
-    public class VoiceLine
+    public class VoiceSound
     {
         public string id;
         public AudioClip clip;
-        [TextArea]
-        public string subtitle;
         [Range(0, 1)]
         public float volume = 1.0f;
+        [Range(0f, 2.0f)]
+        public float pitchVariation = 0f;
     }
 
     /// <summary>
-    ///     Player responsible for voice lines and dialogue
+    ///     Player responsible for character voice sounds (Undertale-style).
     /// </summary>
     public class VoicePlayer : AudioPlayer, ILoggable
     {
         [Header("Voice Settings")]
         [SerializeField] private bool interruptCurrentVoice = false;
-        [SerializeField] private float voiceDelayBetweenClips = 0.2f;
+        [SerializeField] private float characterTalkSpeed = 0.05f;
+        [SerializeField] private Vector2 pitchRange = new Vector2(0.9f, 1.1f);
         
         [Header("Voice Library")]
-        [SerializeField] private List<VoiceLine> voiceLines = new List<VoiceLine>();
+        [SerializeField] private List<VoiceSound> voiceSounds = new List<VoiceSound>();
         
-        // Dictionary for quick lookup of voice lines
-        private Dictionary<string, VoiceLine> voiceLookup = new Dictionary<string, VoiceLine>();
+        // Dictionary for quick lookup of voice sounds
+        private Dictionary<string, VoiceSound> voiceLookup = new Dictionary<string, VoiceSound>();
         
         // Singleton pattern
         private static VoicePlayer _instance;
         public static VoicePlayer Instance => _instance;
         
-        // Queue for sequential voice playback
-        private Queue<string> voiceQueue = new Queue<string>();
-        private bool isPlayingQueue = false;
         private int currentVoiceID = -1;
+        private Coroutine currentTalkRoutine = null;
         
-        // Event that fires when a voice line starts playing (useful for subtitles)
-        public System.Action<string, string> OnVoiceLineStart;
-        public System.Action<string> OnVoiceLineEnd;
+        // Event that fires when character starts/stops talking
+        public System.Action<string> OnTalkStart;
+        public System.Action<string> OnTalkEnd;
         
         /// <summary>
         ///     Awake is called when the script instance is being loaded.
@@ -55,8 +54,8 @@ namespace Game.Audio
                 _instance = this;
                 base.Awake();
                 
-                // Build voice line lookup
-                BuildVoiceLineLookup();
+                // Build voice sound lookup
+                BuildVoiceSoundLookup();
             }
             else
             {
@@ -65,23 +64,23 @@ namespace Game.Audio
         }
         
         /// <summary>
-        ///     Build voice line lookup dictionary
+        ///     Build voice sound lookup dictionary
         /// </summary>
-        private void BuildVoiceLineLookup()
+        private void BuildVoiceSoundLookup()
         {
             voiceLookup.Clear();
             
-            foreach (var line in voiceLines)
+            foreach (var sound in voiceSounds)
             {
-                if (line.clip != null && !string.IsNullOrEmpty(line.id))
+                if (sound.clip != null && !string.IsNullOrEmpty(sound.id))
                 {
-                    voiceLookup[line.id] = line;
+                    voiceLookup[sound.id] = sound;
                 }
             }
         }
         
         /// <summary>
-        ///     Play a voice clip with given volume
+        ///     Play a voice clip with given volume and pitch
         /// </summary>
         public override int Play(AudioClip clip, float volume = 1.0f, bool loop = false)
         {
@@ -101,6 +100,7 @@ namespace Game.Audio
                 source.clip = clip;
                 source.volume = volume;
                 source.loop = loop;
+                source.pitch = Random.Range(pitchRange.x, pitchRange.y);
                 source.Play();
                 
                 // Track this sound
@@ -124,103 +124,151 @@ namespace Game.Audio
         }
         
         /// <summary>
-        ///     Play a voice line by ID
+        ///     Play a voice sound by ID
         /// </summary>
-        public override int Play(string voiceLineID, float volume = 1.0f, bool loop = false)
+        public override int Play(string voiceSoundID, float volume = 1.0f, bool loop = false)
         {
-            if (voiceLookup.TryGetValue(voiceLineID, out VoiceLine line))
+            if (voiceLookup.TryGetValue(voiceSoundID, out VoiceSound sound))
             {
-                // Use line-specific volume if not explicitly overridden
-                if (volume == 1.0f) volume = line.volume;
+                // Use sound-specific volume if not explicitly overridden
+                if (volume == 1.0f) volume = sound.volume;
                 
-                int id = Play(line.clip, volume, loop);
-                
-                // Fire event for subtitle display
-                OnVoiceLineStart?.Invoke(voiceLineID, line.subtitle);
+                int id = Play(sound.clip, volume, loop);
                 
                 return id;
             }
             
-            this.LogWarning($"Voice line '{voiceLineID}' not found.");
+            this.LogWarning($"Voice sound '{voiceSoundID}' not found.");
             return -1;
         }
         
         /// <summary>
-        ///     Add voice lines to a queue to play in sequence
+        ///     Play a random voice clip from the list
         /// </summary>
-        public void QueueVoiceLines(params string[] lineIDs)
+        public int Play(float volume = 1.0f, bool loop = false)
         {
-            foreach (var id in lineIDs)
+            if (voiceSounds.Count == 0)
             {
-                if (voiceLookup.ContainsKey(id))
-                {
-                    voiceQueue.Enqueue(id);
-                }
-                else
-                {
-                    this.LogWarning($"Voice line '{id}' not found for queuing.");
-                }
+                this.LogWarning("No voice sounds available to play randomly.");
+                return -1;
             }
             
-            if (!isPlayingQueue)
-            {
-                StartCoroutine(PlayVoiceQueue());
-            }
+            // Select a random voice sound
+            int randomIndex = Random.Range(0, voiceSounds.Count);
+            VoiceSound randomSound = voiceSounds[randomIndex];
+            
+            // Use sound-specific volume if not explicitly overridden
+            if (volume == 1.0f) volume = randomSound.volume;
+            
+            return Play(randomSound.clip, volume, loop);
         }
         
         /// <summary>
-        ///     Coroutine to play voice clips in sequence from the queue
+        ///     Play character talk sounds for a given text length
         /// </summary>
-        private IEnumerator PlayVoiceQueue()
+        public void PlayTalkSounds(string characterID, string text, float talkSpeed = 0.0f)
         {
-            isPlayingQueue = true;
+            if (string.IsNullOrEmpty(text)) return;
             
-            while (voiceQueue.Count > 0)
+            // Stop any current talking
+            StopTalking();
+            
+            // If no talk speed specified, use the default
+            if (talkSpeed <= 0.0f) talkSpeed = characterTalkSpeed;
+            
+            // Start the talk routine
+            currentTalkRoutine = StartCoroutine(TalkRoutine(characterID, text, talkSpeed));
+        }
+        
+        /// <summary>
+        ///     Stop current talking sound routine
+        /// </summary>
+        public void StopTalking()
+        {
+            if (currentTalkRoutine != null)
             {
-                string nextLineID = voiceQueue.Dequeue();
+                StopCoroutine(currentTalkRoutine);
+                currentTalkRoutine = null;
                 
-                if (voiceLookup.TryGetValue(nextLineID, out VoiceLine line))
+                // Also stop any currently playing voice
+                if (currentVoiceID >= 0)
                 {
-                    int id = Play(nextLineID);
-                    
-                    // Wait for the clip to finish
-                    yield return new WaitForSeconds(line.clip.length + voiceDelayBetweenClips);
-                    
-                    // Fire end event
-                    OnVoiceLineEnd?.Invoke(nextLineID);
+                    Stop(currentVoiceID);
+                    currentVoiceID = -1;
                 }
+                
+                OnTalkEnd?.Invoke("");
+            }
+        }
+        
+        /// <summary>
+        ///     Coroutine to play character talk sounds for text
+        /// </summary>
+        private IEnumerator TalkRoutine(string characterID, string text, float talkSpeed)
+        {
+            OnTalkStart?.Invoke(characterID);
+            
+            // If this character doesn't have a voice sound, return early
+            if (!voiceLookup.ContainsKey(characterID))
+            {
+                this.LogWarning($"No voice sound found for character '{characterID}'");
+                yield break;
             }
             
-            isPlayingQueue = false;
+            // Play a sound for each character (or every few characters)
+            for (int i = 0; i < text.Length; i++)
+            {
+                // Skip spaces and punctuation for sound effects
+                if (char.IsWhiteSpace(text[i]) || char.IsPunctuation(text[i]))
+                {
+                    yield return new WaitForSeconds(talkSpeed * 2); // Longer pause for spaces/punctuation
+                    continue;
+                }
+                
+                // Play the character's voice sound
+                Play(characterID);
+                
+                // Wait before the next character
+                yield return new WaitForSeconds(talkSpeed);
+            }
+            
+            OnTalkEnd?.Invoke(characterID);
+            currentTalkRoutine = null;
         }
         
         /// <summary>
-        ///     Clear the voice queue without playing any more clips
+        ///     Play a random voice sound from the available options
         /// </summary>
-        public void ClearVoiceQueue()
+        public int PlayRandomVoiceSound(float volume = 1.0f)
         {
-            voiceQueue.Clear();
+            if (voiceSounds.Count == 0) return -1;
+            
+            // Pick a random voice sound
+            int randomIndex = Random.Range(0, voiceSounds.Count);
+            VoiceSound sound = voiceSounds[randomIndex];
+            
+            return Play(sound.clip, volume);
         }
         
         /// <summary>
-        ///     Add a new voice line programmatically
+        ///     Add a new voice sound programmatically
         /// </summary>
-        public void AddVoiceLine(string id, AudioClip clip, string subtitle = "", float volume = 1.0f)
+        public void AddVoiceSound(string id, AudioClip clip, float volume = 1.0f, float pitchVariation = 1.0f)
         {
             if (clip != null && !string.IsNullOrEmpty(id))
             {
-                // Create voice line
-                var line = new VoiceLine
+                // Create voice sound
+                var sound = new VoiceSound
                 {
                     id = id,
                     clip = clip,
-                    subtitle = subtitle,
-                    volume = volume
+                    volume = volume,
+                    pitchVariation = pitchVariation
                 };
                 
                 // Add to lookup and list
-                voiceLookup[id] = line;
-                voiceLines.Add(line);
+                voiceLookup[id] = sound;
+                voiceSounds.Add(sound);
             }
         }
         
@@ -231,15 +279,15 @@ namespace Game.Audio
         {
             yield return new WaitForSeconds(duration);
             
-            string lineID = null;
+            string soundID_string = null;
             
-            // Find the line ID for this sound
+            // Find the sound ID for this sound
             foreach (var kvp in voiceLookup)
             {
                 if (activeSounds.TryGetValue(soundID, out AudioSource source) && 
                     source.clip == kvp.Value.clip)
                 {
-                    lineID = kvp.Key;
+                    soundID_string = kvp.Key;
                     break;
                 }
             }
@@ -249,24 +297,12 @@ namespace Game.Audio
             {
                 currentVoiceID = -1;
                 
-                // Fire end event if we found the line ID
-                if (lineID != null)
+                // Fire end event if we found the ID
+                if (soundID_string != null)
                 {
-                    OnVoiceLineEnd?.Invoke(lineID);
+                    OnTalkEnd?.Invoke(soundID_string);
                 }
             }
-        }
-        
-        /// <summary>
-        ///     Get the subtitle text for a voice line ID
-        /// </summary>
-        public string GetSubtitleForLine(string lineID)
-        {
-            if (voiceLookup.TryGetValue(lineID, out VoiceLine line))
-            {
-                return line.subtitle;
-            }
-            return string.Empty;
         }
     }
 } 

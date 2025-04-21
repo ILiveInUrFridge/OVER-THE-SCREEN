@@ -8,6 +8,10 @@ using DG.Tweening;
 using TMPro;
 using Game.Audio;
 
+/// <summary>
+///     Script responsible for animating and the general presentation of transition
+///     from the main menu to a new game instance.
+/// </summary>
 public class NewGameAnimator : MonoBehaviour
 {
     [Header("Root that contains all main menu elements")]
@@ -83,11 +87,11 @@ public class NewGameAnimator : MonoBehaviour
         {
             consoleText.text = "";
             consoleText.gameObject.SetActive(false);
-            
+
             // Simple setup with standard TextMeshPro material
             consoleText.fontSharedMaterial = new Material(consoleText.fontSharedMaterial);
             consoleText.fontSharedMaterial.renderQueue = 3000; // Set to be rendered with transparent queue
-            
+
             // Adjust text settings for terminal look
             consoleText.textWrappingMode = TextWrappingModes.NoWrap;
             consoleText.alignment = TextAlignmentOptions.TopLeft;
@@ -101,7 +105,7 @@ public class NewGameAnimator : MonoBehaviour
         {
             // Make sure it's deactivated but fully set up
             scanlineOverlay.gameObject.SetActive(false);
-            
+
             // Get and store the material reference
             if (scanlineOverlay.material != null)
             {
@@ -124,7 +128,7 @@ public class NewGameAnimator : MonoBehaviour
         {
             // Disable further input
             canProceed = false;
-            
+
             // Show "Connecting..." message and display system info after connection
             StartCoroutine(ShowConnectionSuccessful());
         }
@@ -145,7 +149,7 @@ public class NewGameAnimator : MonoBehaviour
             if (consoleText != null && consoleText.gameObject.activeSelf)
             {
                 isCursorVisible = !isCursorVisible;
-                
+
                 // Only update when we're allowed to proceed (after boot sequence)
                 if (canProceed)
                 {
@@ -166,7 +170,7 @@ public class NewGameAnimator : MonoBehaviour
         {
             // Trim console text if needed
             TrimConsoleText();
-            
+
             string text = consoleText.text;
             if (text.EndsWith(cursorChar))
             {
@@ -182,30 +186,30 @@ public class NewGameAnimator : MonoBehaviour
     private void UpdatePressKeyVisibility()
     {
         if (consoleText == null) return;
-        
+
         // Get the main text content without any cursor
         string baseText = consoleText.text;
         if (baseText.EndsWith(cursorChar))
         {
             baseText = baseText.Substring(0, baseText.Length - 1);
         }
-        
+
         // Remove any existing press key message to avoid duplication
         int pressKeyIndex = baseText.LastIndexOf(pressAnyKeyMessage);
         if (pressKeyIndex >= 0)
         {
             baseText = baseText.Substring(0, pressKeyIndex);
         }
-        
+
         // Add the press key message with a highlight
         baseText += $"<color=#{ColorUtility.ToHtmlStringRGB(pressKeyColor)}>{pressAnyKeyMessage}</color>";
-        
+
         // Add blinking cursor
         if (isCursorVisible)
         {
             baseText += cursorChar;
         }
-        
+
         // Update the text
         consoleText.text = baseText;
     }
@@ -220,7 +224,7 @@ public class NewGameAnimator : MonoBehaviour
         {
             // First ensure the parent object is active
             transitionScreen.SetActive(true);
-            
+
             // Then initialize its components
             if (transitionImage != null)
             {
@@ -228,20 +232,20 @@ public class NewGameAnimator : MonoBehaviour
                 Color color = transitionImage.color;
                 color.a = 0f;
                 transitionImage.color = color;
-                
+
                 // Start the fade and console sequence after fade completes
                 StartCoroutine(TransitionSequence());
             }
-            
+
             // Initialize console text but keep it hidden
             if (consoleText != null)
             {
                 consoleText.gameObject.SetActive(false); // Keep it hidden until after delay
                 consoleText.text = ""; // Clear any previous text
             }
-            
+
             // Initialize scanline overlay - but keep it deactivated until after the delay
-            if (scanlineOverlay != null) 
+            if (scanlineOverlay != null)
             {
                 scanlineOverlay.gameObject.SetActive(false);
             }
@@ -271,7 +275,7 @@ public class NewGameAnimator : MonoBehaviour
     {
         // First fade to black
         yield return StartCoroutine(FadeToBlack());
-        
+
         // Add additional delay after screen is black before "turning on" the computer
         yield return new WaitForSeconds(5.0f);
 
@@ -287,7 +291,7 @@ public class NewGameAnimator : MonoBehaviour
             // Use default track volume from inspector by using volume = 1.0f
             AudioManager.Music.Play(trackName: "ambient.computer_hum", fadeIn: 1.0f);
             AudioManager.Music.Play(trackName: "ambient.texture_2", fadeIn: 1.5f);
-            
+
             // Activate the overlay but set alpha to 0
             scanlineOverlay.gameObject.SetActive(true);
             Color startColor = scanlineOverlay.color;
@@ -387,10 +391,10 @@ public class NewGameAnimator : MonoBehaviour
                 // Instead of just opacity changes, add color tinting during flickers
                 float dimDuration = 0.05f;
                 elapsedTime = 0f;
-                Color tintColor = (i % 2 == 0) ? 
+                Color tintColor = (i % 2 == 0) ?
                     new Color(1.0f, 0.9f, 0.9f, initialOverlayAlpha * 0.7f) : // Slight red tint
                     new Color(0.9f, 0.9f, 1.0f, initialOverlayAlpha * 0.7f);  // Slight blue tint
-                
+
                 while (elapsedTime < dimDuration)
                 {
                     elapsedTime += Time.deltaTime;
@@ -413,7 +417,7 @@ public class NewGameAnimator : MonoBehaviour
                 float brightenDuration = 0.07f;
                 elapsedTime = 0f;
                 Color normalColor = new Color(1f, 1f, 1f, initialOverlayAlpha);
-                
+
                 while (elapsedTime < brightenDuration)
                 {
                     elapsedTime += Time.deltaTime;
@@ -425,7 +429,7 @@ public class NewGameAnimator : MonoBehaviour
 
                     yield return null;
                 }
-                
+
                 // Add occasional shader glitch during the flicker sequence
                 if (Random.value < 0.5f && shaderMaterial != null)
                 {
@@ -494,42 +498,42 @@ public class NewGameAnimator : MonoBehaviour
                 shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY);
             }
         }
-        
+
         // Short delay after scanlines appear before text starts
         yield return new WaitForSeconds(0.5f);
-        
+
         // Activate console text with fade-in effect
         if (consoleText != null)
         {
             consoleText.gameObject.SetActive(true);
-            
+
             // Start with transparent text
             Color textColor = consoleText.color;
             float originalAlpha = textColor.a;
             textColor.a = 0f;
             consoleText.color = textColor;
-            
+
             // Fade in the text
             float textFadeDuration = 0.4f;
             float elapsedTime = 0f;
-            
+
             while (elapsedTime < textFadeDuration)
             {
                 elapsedTime += Time.deltaTime;
                 float t = Mathf.Clamp01(elapsedTime / textFadeDuration);
-                
+
                 // Update the color
                 Color newColor = consoleText.color;
                 newColor.a = Mathf.Lerp(0f, originalAlpha, t);
                 consoleText.color = newColor;
-                
+
                 yield return null;
             }
-            
+
             // Ensure we end with correct alpha
             textColor.a = originalAlpha;
             consoleText.color = textColor;
-            
+
             // Start console sequence after fade-in is complete
             StartCoroutine(PlayConsoleSequence());
         }
@@ -558,7 +562,7 @@ public class NewGameAnimator : MonoBehaviour
     private IEnumerator PlayConsoleSequence()
     {
         isTyping = true;  // Start typing sequence
-        
+
         // List to keep track of all messages
         List<string> consoleHistory = new List<string>();
 
@@ -646,7 +650,7 @@ public class NewGameAnimator : MonoBehaviour
         consoleText.lineSpacing = -15f;  // Tighten line spacing for a terminal look
 
         yield return new WaitForSeconds(0.3f);  // Initial pause before starting (shortened)
-        
+
         AudioManager.SFX.Play("confirm_1", 0.3f);
 
         // Track boot progress for visual effects
@@ -656,7 +660,7 @@ public class NewGameAnimator : MonoBehaviour
         {
             // Update progress for each message (normalized 0-1)
             overallProgress += 1f / bootMessages.Length;
-            
+
             // Set glitch intensity based on whether this is an error message
             if (shaderMaterial != null)
             {
@@ -747,7 +751,7 @@ public class NewGameAnimator : MonoBehaviour
 
                     // Type faster for longer messages
                     float speedMultiplier = message.Length > 30 ? 0.6f : 1.0f;
-                    
+
                     // Occasional slight pause during typing (feels more like real typing)
                     if (Random.value < 0.03f && !isError) // Reduced from 0.05f
                     {
@@ -783,7 +787,7 @@ public class NewGameAnimator : MonoBehaviour
 
                     // Track which segments are filled for pulse effect
                     bool[] filledSegments = new bool[barLength];
-                    
+
                     // Pulse animation parameters
                     float pulseSpeed = 8f;
                     float pulseTime = 0f;
@@ -807,14 +811,14 @@ public class NewGameAnimator : MonoBehaviour
                         {
                             string barSegment = new string('=', barsToAdd);
                             consoleText.text += barSegment;
-                            
+
                             // Mark these segments as filled
                             for (int i = 0; i < barsToAdd; i++)
                             {
                                 if (currentBars + i < barLength)
                                     filledSegments[currentBars + i] = true;
                             }
-                            
+
                             currentBars += barsToAdd;
 
                             // Calculate progress percentage (0-100)
@@ -822,7 +826,7 @@ public class NewGameAnimator : MonoBehaviour
 
                             // Update the completion percentage
                             string textWithoutPercentage = consoleText.text;
-                            
+
                             // Add pulsing animation to the loading text by varying brightness
                             pulseTime += Time.deltaTime * pulseSpeed;
                             float pulseValue = Mathf.PingPong(pulseTime, 0.4f) + 0.6f; // Oscillates between 0.6 and 1.0
@@ -830,7 +834,7 @@ public class NewGameAnimator : MonoBehaviour
                             Color.RGBToHSV(color, out hue, out saturation, out value);
                             Color pulseColor = Color.HSVToRGB(hue, saturation, value * pulseValue);
                             string pulseColorHex = ColorUtility.ToHtmlStringRGB(pulseColor);
-                            
+
                             consoleText.text = $"{textWithoutPercentage}] <color=#{pulseColorHex}>{percentage}%</color>";
 
                             // Wait based on progress speed
@@ -886,10 +890,10 @@ public class NewGameAnimator : MonoBehaviour
                         // Add a success animation - quick color flash
                         string successColorHex = ColorUtility.ToHtmlStringRGB(Color.Lerp(color, Color.white, 0.5f));
                         consoleText.text = consoleText.text.Substring(0, endIndex + 1) + $" <color=#{successColorHex}>100%</color>";
-                        
+
                         // Play a success sound
                         AudioManager.SFX.Play("confirm_1", 0.2f);
-                        
+
                         yield return new WaitForSeconds(0.1f);
                     }
                     else
@@ -939,7 +943,7 @@ public class NewGameAnimator : MonoBehaviour
                     yield return new WaitForSeconds(messageDelay);
                 }
             }
-            
+
             // Add subtle visual feedback based on progress
             if (scanlineOverlay != null && shaderMaterial != null)
             {
@@ -948,7 +952,7 @@ public class NewGameAnimator : MonoBehaviour
                 Color overlayColor = scanlineOverlay.color;
                 overlayColor.a = scanlineAlpha;
                 scanlineOverlay.color = overlayColor;
-                
+
                 // Visual interest: Occasionally add a quick color tint on major progress points
                 if (message.StartsWith("[INIT]") && Random.value < 0.3f)
                 {
@@ -965,7 +969,7 @@ public class NewGameAnimator : MonoBehaviour
                     // Quick green tint for completions
                     StartCoroutine(QuickOverlayTint(new Color(0.9f, 1.0f, 0.9f, scanlineAlpha * 1.2f), 0.2f));
                 }
-                
+
                 // Gradually reduce curvature as system stabilizes
                 shaderMaterial.SetFloat("_CurvatureX", Mathf.Lerp(baseCurvatureX * 1.5f, baseCurvatureX, overallProgress));
                 shaderMaterial.SetFloat("_CurvatureY", Mathf.Lerp(baseCurvatureY * 1.5f, baseCurvatureY, overallProgress));
@@ -980,20 +984,20 @@ public class NewGameAnimator : MonoBehaviour
 
         // Final initialization success sound
         AudioManager.SFX.Play("confirm_3", 0.4f);
-        
+
         // Add an extra line break for spacing
         consoleText.text += "\n";
-        
+
         // Save the index where the "Press Any Key" message would start
         // But don't add it yet - we'll let UpdatePressKeyVisibility handle this
         pressKeyTextStartIndex = consoleText.text.Length;
-        
+
         // Enable scene transition
         canProceed = true;
         isTyping = false;  // End typing sequence
 
         AudioManager.SFX.Play("glass_5", 0.5f);
-        
+
         // Add a subtle "ready" glow effect to the screen
         if (transitionImage != null)
         {
@@ -1001,39 +1005,39 @@ public class NewGameAnimator : MonoBehaviour
             transitionImage.color = softGlow;
             float glowDuration = 0.5f;
             float elapsedTime = 0f;
-            
+
             while (elapsedTime < glowDuration)
             {
                 elapsedTime += Time.deltaTime;
                 float t = elapsedTime / glowDuration;
-                
+
                 // Pulse glow effect
                 float pulse = Mathf.Sin(t * Mathf.PI * 2) * 0.5f + 0.5f;
                 transitionImage.color = new Color(softGlow.r, softGlow.g, softGlow.b, softGlow.a * pulse);
-                
+
                 yield return null;
             }
-            
+
             // Fade out glow
             elapsedTime = 0f;
             float fadeDuration = 0.5f;
-            
+
             while (elapsedTime < fadeDuration)
             {
                 elapsedTime += Time.deltaTime;
                 float t = elapsedTime / fadeDuration;
-                
+
                 transitionImage.color = Color.Lerp(softGlow, Color.clear, t);
-                
+
                 yield return null;
             }
-            
+
             transitionImage.color = Color.clear;
         }
-        
+
         // Force first update of the press key visibility
         UpdatePressKeyVisibility();
-        
+
         // Return so the coroutine completes
         yield return null;
     }
@@ -1045,7 +1049,7 @@ public class NewGameAnimator : MonoBehaviour
         {
             float startIntensity = shaderMaterial.GetFloat("_GlitchIntensity");
             float elapsedTime = 0f;
-            
+
             while (elapsedTime < duration)
             {
                 elapsedTime += Time.deltaTime;
@@ -1054,7 +1058,7 @@ public class NewGameAnimator : MonoBehaviour
                 shaderMaterial.SetFloat("_GlitchIntensity", currentIntensity);
                 yield return null;
             }
-            
+
             // Ensure we end at exactly the target intensity
             shaderMaterial.SetFloat("_GlitchIntensity", targetIntensity);
         }
@@ -1066,7 +1070,7 @@ public class NewGameAnimator : MonoBehaviour
         if (shaderMaterial != null)
         {
             StartCoroutine(GlitchEffectSequence(intensity, duration));
-            
+
             // Add chance to play a glitch sound when triggering a visual glitch
             if (Random.value < 0.7f)
             {
@@ -1074,7 +1078,7 @@ public class NewGameAnimator : MonoBehaviour
             }
         }
     }
-    
+
     private IEnumerator GlitchEffectSequence(float intensity, float duration)
     {
         if (shaderMaterial != null)
@@ -1082,17 +1086,17 @@ public class NewGameAnimator : MonoBehaviour
             // Store original values
             float originalGlitchIntensity = shaderMaterial.GetFloat("_GlitchIntensity");
             float originalGlitchSpeed = shaderMaterial.GetFloat("_GlitchSpeed");
-            
+
             // Set intense glitch values
             shaderMaterial.SetFloat("_GlitchIntensity", intensity);
             shaderMaterial.SetFloat("_GlitchSpeed", glitchSpeed * 2f);
-            
+
             // Add more interesting visual effects - color distortion and scanline jitter
             if (scanlineOverlay != null)
             {
                 Color originalColor = scanlineOverlay.color;
                 float originalAlpha = originalColor.a;
-                
+
                 // Brief color tint to the scanlines (subtle but noticeable)
                 scanlineOverlay.color = new Color(
                     1.0f, // Red tint
@@ -1100,20 +1104,20 @@ public class NewGameAnimator : MonoBehaviour
                     originalColor.b * 0.8f,
                     originalAlpha * 1.2f // Slightly more visible but not too bright
                 );
-                
+
                 // Wait a very short time
                 yield return new WaitForSeconds(duration * 0.2f);
-                
+
                 // Return to normal color but keep the effect going
                 scanlineOverlay.color = originalColor;
             }
-            
+
             // Brief distortion of text if it's active
             if (consoleText != null && consoleText.gameObject.activeSelf && Random.value < 0.7f)
             {
                 RectTransform textRect = consoleText.GetComponent<RectTransform>();
                 Vector2 originalPos = textRect.anchoredPosition;
-                
+
                 // Quick jitter
                 for (int i = 0; i < 3; i++)
                 {
@@ -1125,14 +1129,14 @@ public class NewGameAnimator : MonoBehaviour
                     );
                     yield return new WaitForSeconds(duration * 0.05f);
                 }
-                
+
                 // Reset position
                 textRect.anchoredPosition = originalPos;
             }
-            
+
             // Wait for the rest of the duration
             yield return new WaitForSeconds(duration * 0.6f);
-            
+
             // Restore original values
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity);
             shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed);
@@ -1143,19 +1147,19 @@ public class NewGameAnimator : MonoBehaviour
     private void TrimConsoleText()
     {
         if (consoleText == null) return;
-        
+
         string[] lines = consoleText.text.Split('\n');
-        
+
         // If we exceed the maximum number of lines, trim the oldest ones
         if (lines.Length > maxConsoleLines)
         {
             // Keep only the most recent lines
             int linesToKeep = maxConsoleLines;
-            
+
             // We need to find where the press key message might be
             bool hasPressKeyMessage = false;
             int pressKeyLine = -1;
-            
+
             for (int i = lines.Length - 1; i >= 0; i--)
             {
                 if (lines[i].Contains(pressAnyKeyMessage))
@@ -1165,17 +1169,17 @@ public class NewGameAnimator : MonoBehaviour
                     break;
                 }
             }
-            
+
             // If we have a press key message, make sure it's kept
             if (hasPressKeyMessage && pressKeyLine >= 0)
             {
                 // Ensure we include the press key message line in what we keep
                 linesToKeep = Mathf.Min(maxConsoleLines, lines.Length - pressKeyLine);
             }
-            
+
             // Build new text with only the most recent lines
             string newText = string.Join("\n", lines.Skip(lines.Length - linesToKeep).Take(linesToKeep));
-            
+
             // Update the console text
             consoleText.text = newText;
         }
@@ -1193,27 +1197,27 @@ public class NewGameAnimator : MonoBehaviour
             float originalGlitchSpeed = shaderMaterial.GetFloat("_GlitchSpeed");
             float originalCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
             float originalCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
-            
+
             // Store the original position of the console text
             Vector2 originalTextPosition = Vector2.zero;
             if (consoleText != null)
             {
                 RectTransform textRect = consoleText.GetComponent<RectTransform>();
                 originalTextPosition = textRect.anchoredPosition;
-                
+
                 // Store original text for later scrambling
                 string originalText = consoleText.text;
             }
-            
+
             // Initial phase: Everything seems fine for a moment (normal operation)
             AudioManager.SFX.Play("bong_1", 0.2f);
-            
+
             // Brief normal pause as if everything is fine
             yield return new WaitForSeconds(0.8f);
-            
+
             // Slight unexpected glitch - first sign something is wrong
             TriggerGlitchEffect(0.2f, 0.1f);
-            
+
             // First text corruption - just a character or two
             if (consoleText != null)
             {
@@ -1221,13 +1225,13 @@ public class NewGameAnimator : MonoBehaviour
                 // Corrupt just a few characters (1%)
                 consoleText.text = CorruptText(currentText, 0.01f);
             }
-            
+
             // Return to normal briefly
             yield return new WaitForSeconds(0.6f);
-            
+
             // Another small glitch - things are getting unstable
             TriggerGlitchEffect(0.25f, 0.15f);
-            
+
             // Second text corruption - a bit more noticeable
             if (consoleText != null)
             {
@@ -1235,18 +1239,18 @@ public class NewGameAnimator : MonoBehaviour
                 // Corrupt more characters (3%)
                 consoleText.text = CorruptText(currentText, 0.03f);
             }
-            
+
             // Brief pause
             yield return new WaitForSeconds(0.4f);
-            
+
             // Stage 1: Subtle instability (small flicker) - keep text visible
             PlayRandomGlitchSound(0.3f);
             AudioManager.SFX.Play("pink_noise_2", 0.1f);
-            
+
             // First subtle shader adjustment
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 1.5f);
             shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 1.2f);
-            
+
             // Small screen flicker
             if (transitionImage != null)
             {
@@ -1256,7 +1260,7 @@ public class NewGameAnimator : MonoBehaviour
                 yield return new WaitForSeconds(0.04f);
                 transitionImage.color = originalColor;
             }
-            
+
             // More text corruption
             if (consoleText != null)
             {
@@ -1264,39 +1268,39 @@ public class NewGameAnimator : MonoBehaviour
                 // More aggressive corruption (7%)
                 consoleText.text = CorruptText(currentText, 0.07f);
             }
-            
+
             yield return new WaitForSeconds(0.4f);
-            
+
             // Stage 2: Medium instability (more obvious glitches) - text still visible
             PlayRandomGlitchSound(0.4f);
-            
+
             // Second shader adjustment
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 2.5f);
             shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 1.8f);
             shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 1.3f);
             shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 1.3f);
-            
+
             // Medium screen flicker with text jitter
             if (transitionImage != null && consoleText != null)
             {
                 // Brief text jitter with progressive corruption
                 RectTransform textRect = consoleText.GetComponent<RectTransform>();
-                
+
                 // Jitter text position a few times and increase corruption
                 for (int i = 0; i < 3; i++)
                 {
                     textRect.anchoredPosition = originalTextPosition + new Vector2(Random.Range(-3f, 3f), Random.Range(-3f, 3f));
-                    
+
                     // Progressive text corruption during jitter
                     string currentText = consoleText.text;
                     float corruptionLevel = 0.1f + (i * 0.05f); // Increasing corruption (10%, 15%, 20%)
                     consoleText.text = CorruptText(currentText, corruptionLevel);
-                    
+
                     yield return new WaitForSeconds(0.05f);
                 }
-                
+
                 textRect.anchoredPosition = originalTextPosition;
-                
+
                 // Medium flicker
                 Color originalColor = transitionImage.color;
                 Color flickerColor = new Color(0.1f, 0.1f, 0.1f, 0.3f);
@@ -1304,14 +1308,14 @@ public class NewGameAnimator : MonoBehaviour
                 yield return new WaitForSeconds(0.06f);
                 transitionImage.color = originalColor;
             }
-            
+
             yield return new WaitForSeconds(0.3f);
-            
+
             // Final pre-shutdown warning
             // Trigger one medium glitch line while text is still visible
             StartCoroutine(CreatePreShutdownGlitchLine(transitionImage.transform));
             PlayRandomGlitchSound(0.5f);
-            
+
             // Heavy text corruption
             if (consoleText != null)
             {
@@ -1319,31 +1323,31 @@ public class NewGameAnimator : MonoBehaviour
                 // Very heavy corruption (25%)
                 consoleText.text = CorruptText(currentText, 0.25f);
             }
-            
+
             yield return new WaitForSeconds(0.15f);
         }
-        
+
         // Now proceed with more intense glitches while text is still visible
         // Play switch-off sound
         AudioManager.SFX.Play("switch_6", 0.2f);
-        
+
         // Fade out computer hum sound
         AudioManager.Music.FadeOutMusic(0.5f); // Faster fade of music
-        
+
         // Initial glitch sound
         PlayRandomGlitchSound(0.6f);
-        
+
         AudioManager.SFX.Play("pink_noise_2", 0.3f);
-        
+
         // Let the sound play for a moment before effects start
         yield return new WaitForSeconds(0.1f);
-        
+
         // Start progressive text corruption for the final phase
         if (consoleText != null)
         {
             StartCoroutine(ProgressiveTextCorruption(0.7f));
         }
-        
+
         // Increase CRT glitch effects while text is still visible
         if (shaderMaterial != null)
         {
@@ -1352,7 +1356,7 @@ public class NewGameAnimator : MonoBehaviour
             float originalGlitchSpeed = shaderMaterial.GetFloat("_GlitchSpeed");
             float originalCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
             float originalCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
-            
+
             // Increase values for shutdown effect
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 5f);
             shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 4f);
@@ -1362,28 +1366,28 @@ public class NewGameAnimator : MonoBehaviour
 
         // Add glitch lines while the text is still visible
         StartCoroutine(CreateGlitchLines(transitionImage.transform, 0.8f));
-        
+
         // Rapidly jitter the text during the glitch effect
         if (consoleText != null)
         {
             RectTransform textRect = consoleText.GetComponent<RectTransform>();
             Vector2 originalPos = textRect.anchoredPosition;
-            
+
             // Violent text jitter for a brief moment
             float jitterDuration = 0.4f;
             float jitterElapsed = 0f;
-            
+
             while (jitterElapsed < jitterDuration)
             {
                 jitterElapsed += Time.deltaTime;
-                
+
                 // More extreme jitter as time progresses
                 float intensity = Mathf.Lerp(3f, 12f, jitterElapsed / jitterDuration);
                 textRect.anchoredPosition = originalPos + new Vector2(
                     Random.Range(-intensity, intensity),
                     Random.Range(-intensity, intensity)
                 );
-                
+
                 // Random color distortion
                 if (Random.value < 0.3f)
                 {
@@ -1398,29 +1402,29 @@ public class NewGameAnimator : MonoBehaviour
                 {
                     consoleText.color = Color.white;
                 }
-                
+
                 // Extreme text corruption during violent jitter
                 string currentText = consoleText.text;
                 float corruptionFactor = Mathf.Lerp(0.3f, 0.7f, jitterElapsed / jitterDuration);
                 consoleText.text = CorruptText(currentText, corruptionFactor);
-                
+
                 yield return null;
             }
-            
+
             // Reset position before the final glitch
             textRect.anchoredPosition = originalPos;
             consoleText.color = Color.white;
-            
+
             // Maximum corruption at the end - almost unreadable
             consoleText.text = CorruptText(consoleText.text, 0.9f);
         }
-        
+
         // Final massive glitch before shutdown
         TriggerGlitchEffect(1.5f, 0.15f);
         PlayRandomGlitchSound(0.8f);
-        
+
         yield return new WaitForSeconds(0.15f);
-        
+
         // Screen tear effect - optional but looks cool
         if (consoleText != null && transitionImage != null)
         {
@@ -1429,44 +1433,44 @@ public class NewGameAnimator : MonoBehaviour
             tearObj.transform.SetParent(transitionImage.transform, false);
             Image tearImage = tearObj.AddComponent<Image>();
             tearImage.color = new Color(1f, 1f, 1f, 0.8f);
-            
+
             RectTransform tearRect = tearImage.GetComponent<RectTransform>();
             tearRect.anchorMin = new Vector2(0, 0.4f);
             tearRect.anchorMax = new Vector2(1, 0.6f);
             tearRect.sizeDelta = new Vector2(0, 20f);
-            
+
             // Quick flash of the tear
             yield return new WaitForSeconds(0.05f);
             PlayRandomGlitchSound(1.0f);
-            
+
             // Destroy the tear
             Destroy(tearObj);
         }
-        
+
         // SUDDEN BLACK SCREEN - simulating monitor abruptly losing power
         if (transitionImage != null)
         {
             // Hard cut to black
             transitionImage.color = Color.black;
-            
+
             // Hide console text and scanlines immediately
             if (consoleText != null)
             {
                 consoleText.gameObject.SetActive(false);
             }
-            
+
             if (scanlineOverlay != null)
             {
                 scanlineOverlay.gameObject.SetActive(false);
             }
-            
+
             // One final loud glitch sound on shutdown
             PlayRandomGlitchSound(1.0f);
         }
-        
+
         // Brief pause in darkness before scene transition
         yield return new WaitForSeconds(0.5f);
-        
+
         // Now load the next scene
         SceneManager.LoadScene("IntroAndTutorial");
     }
@@ -1476,13 +1480,13 @@ public class NewGameAnimator : MonoBehaviour
     {
         // Handle empty or null text
         if (string.IsNullOrEmpty(text)) return text;
-        
+
         // Convert to char array for manipulation
         char[] chars = text.ToCharArray();
-        
+
         // Determine how many characters to corrupt
         int corruptCount = Mathf.FloorToInt(chars.Length * corruptionFactor);
-        
+
         // Protect against corrupting rich text tags - store their positions
         List<int> protectedIndices = new List<int>();
         bool inTag = false;
@@ -1492,7 +1496,7 @@ public class NewGameAnimator : MonoBehaviour
             if (inTag) protectedIndices.Add(i);
             if (chars[i] == '>') inTag = false;
         }
-        
+
         // Scramble random characters
         for (int i = 0; i < corruptCount; i++)
         {
@@ -1506,10 +1510,10 @@ public class NewGameAnimator : MonoBehaviour
                 // Give up after too many attempts to avoid infinite loops
                 if (attempts > 50) break;
             } while (protectedIndices.Contains(pos));
-            
+
             // Skip if we couldn't find a valid position
             if (attempts > 50) continue;
-            
+
             // Replace with a random ASCII character - including symbols and control chars for more visual chaos
             // Weighted toward more visually interesting characters
             float randomType = Random.value;
@@ -1535,30 +1539,30 @@ public class NewGameAnimator : MonoBehaviour
                 chars[pos] = (char)(chars[pos] + Random.Range(-5, 5));
             }
         }
-        
+
         // Convert back to string
         return new string(chars);
     }
-    
+
     // Progressive text corruption for the final shutdown sequence
     private IEnumerator ProgressiveTextCorruption(float duration)
     {
         if (consoleText == null) yield break;
-        
+
         string originalText = consoleText.text;
         float elapsed = 0f;
-        
+
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
             float progress = elapsed / duration;
-            
+
             // Exponential corruption - starts slow, gets very aggressive
             float corruptionFactor = Mathf.Pow(progress, 2) * 0.6f; // Up to 60% corruption
-            
+
             // Apply corruption
             consoleText.text = CorruptText(originalText, corruptionFactor);
-            
+
             // Brief pause between corruption updates
             yield return new WaitForSeconds(0.05f);
         }
@@ -1568,8 +1572,8 @@ public class NewGameAnimator : MonoBehaviour
     private IEnumerator ShowProceedingMessage()
     {
         // Play confirmation sound
-        AudioManager.SFX.Play("confirm_2", 0.3f);
-        
+        AudioManager.SFX.Play("confirm_3", 0.3f);
+
         if (consoleText != null)
         {
             // Get current text and ensure cursor is removed if present
@@ -1578,31 +1582,31 @@ public class NewGameAnimator : MonoBehaviour
             {
                 currentText = currentText.Substring(0, currentText.Length - 1);
             }
-            
+
             // Remove the "PRESS ENTER TO CONNECT" message
             int pressKeyIndex = currentText.LastIndexOf(pressAnyKeyMessage);
             if (pressKeyIndex >= 0)
             {
                 currentText = currentText.Substring(0, pressKeyIndex);
             }
-            
+
             // Add the "Proceeding..." message with a different color (yellow/gold)
             Color proceedingColor = new Color(0.9f, 0.8f, 0.2f); // Gold/yellow color
             string proceedingMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(proceedingColor)}>Proceeding...</color>";
             string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
             consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color>" + proceedingMessage;
-            
+
             // Show cursor blinking at the end of the message
             StartCoroutine(BlinkCursorAfterProceeding(currentText, proceedingMessage));
-            
+
             // Wait a moment before starting the shutdown sequence
             yield return new WaitForSeconds(1.5f);
         }
-        
+
         // Start power-off sequence
         StartCoroutine(MonitorPowerOffSequence());
     }
-    
+
     // New method to blink the cursor after the "Proceeding..." message
     private IEnumerator BlinkCursorAfterProceeding(string baseText, string proceedingMessage)
     {
@@ -1610,12 +1614,12 @@ public class NewGameAnimator : MonoBehaviour
         float elapsed = 0f;
         float totalTime = 1.5f; // Match the delay before shutdown
         string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
-        
+
         while (elapsed < totalTime)
         {
             // Toggle cursor visibility
             localCursorVisible = !localCursorVisible;
-            
+
             // Update text with or without cursor
             if (localCursorVisible)
             {
@@ -1625,7 +1629,7 @@ public class NewGameAnimator : MonoBehaviour
             {
                 consoleText.text = baseText + $"\n<color=#{caretColorHex}>> </color>" + proceedingMessage;
             }
-            
+
             // Wait for blink interval
             yield return new WaitForSeconds(cursorBlinkSpeed);
             elapsed += cursorBlinkSpeed;
@@ -1644,34 +1648,34 @@ public class NewGameAnimator : MonoBehaviour
     private IEnumerator QuickOverlayTint(Color targetColor, float duration)
     {
         if (scanlineOverlay == null) yield break;
-        
+
         Color originalColor = scanlineOverlay.color;
         float elapsedTime = 0f;
-        
+
         // Fade to target color
         while (elapsedTime < duration * 0.4f)
         {
             elapsedTime += Time.deltaTime;
             float t = Mathf.Clamp01(elapsedTime / (duration * 0.4f));
-            
+
             scanlineOverlay.color = Color.Lerp(originalColor, targetColor, t);
             yield return null;
         }
-        
+
         // Hold briefly
         yield return new WaitForSeconds(duration * 0.2f);
-        
+
         // Fade back
         elapsedTime = 0f;
         while (elapsedTime < duration * 0.4f)
         {
             elapsedTime += Time.deltaTime;
             float t = Mathf.Clamp01(elapsedTime / (duration * 0.4f));
-            
+
             scanlineOverlay.color = Color.Lerp(targetColor, originalColor, t);
             yield return null;
         }
-        
+
         // Ensure we return to original color
         scanlineOverlay.color = originalColor;
     }
@@ -1682,49 +1686,49 @@ public class NewGameAnimator : MonoBehaviour
         // Get dimensions
         RectTransform canvasRect = parent.GetComponent<RectTransform>();
         float screenHeight = canvasRect.rect.height;
-        
+
         // Create the glitch line
         GameObject lineObj = new GameObject("PreShutdownGlitch");
         lineObj.transform.SetParent(parent, false);
         Image lineImage = lineObj.AddComponent<Image>();
         lineImage.color = new Color(1f, 1f, 1f, 0.8f);
-        
+
         RectTransform lineRect = lineImage.GetComponent<RectTransform>();
-        
+
         // Horizontal line
         lineRect.anchorMin = new Vector2(0, 0);
         lineRect.anchorMax = new Vector2(1, 0);
-        
+
         // Position in the middle-ish of screen
         float yPos = Random.Range(0.4f, 0.6f);
         lineRect.anchoredPosition = new Vector2(0, screenHeight * yPos);
-        
+
         // Thin line
         lineRect.sizeDelta = new Vector2(0, 1.5f);
-        
+
         // Glitch appearance
         float lifetime = 0.3f;
         float elapsed = 0f;
-        
+
         while (elapsed < lifetime)
         {
             elapsed += Time.deltaTime;
-            
+
             // Random flickering
             if (Random.value < 0.4f)
             {
                 lineImage.enabled = !lineImage.enabled;
             }
-            
+
             // Occasional position shift
             if (Random.value < 0.3f)
             {
                 lineRect.anchoredPosition = new Vector2(0, screenHeight * (yPos + Random.Range(-0.02f, 0.02f)));
             }
-            
+
             yield return null;
         }
-        
+
         // Destroy the line
         Destroy(lineObj);
     }
@@ -1735,38 +1739,38 @@ public class NewGameAnimator : MonoBehaviour
     {
         // List to track created lines for easy cleanup
         List<GameObject> glitchLines = new List<GameObject>();
-        
+
         // Get canvas dimensions for positioning
         RectTransform canvasRect = parent.GetComponent<RectTransform>();
         float screenHeight = canvasRect.rect.height;
         float screenWidth = canvasRect.rect.width;
-        
+
         // Multiple phases of the glitch effect
         float totalTime = 0;
         float intensityMultiplier = 2.0f; // More intense glitches overall
-        
+
         // Define the glitch intensity over time - quicker and more intense sequence
         // 0-0.2: Initial subtle glitches
         // 0.2-0.5: Increasing intensity
         // 0.5-0.7: Peak intensity with bursts
         // 0.7-1.0: Quick fadeout
-        
+
         while (totalTime < duration)
         {
             totalTime += Time.deltaTime;
             float normalizedTime = totalTime / duration; // 0 to 1 over the course of the effect
-            
+
             // Determine the current phase
             float baseChance = 0;
             float burstChance = 0;
-            
+
             // Phase 1: Initial subtle glitches (0-20% of duration)
             if (normalizedTime < 0.2f)
             {
                 // Start with slightly more glitching immediately
                 baseChance = 0.02f * intensityMultiplier;
                 burstChance = 0.01f * intensityMultiplier;
-                
+
                 // Create more lines from the start
                 if (Random.value < baseChance && glitchLines.Count < 2)
                 {
@@ -1780,24 +1784,24 @@ public class NewGameAnimator : MonoBehaviour
                 float progress = (normalizedTime - 0.2f) / 0.3f; // 0 to 1 within this phase
                 baseChance = Mathf.Lerp(0.02f, 0.08f, progress) * intensityMultiplier;
                 burstChance = Mathf.Lerp(0.01f, 0.04f, progress) * intensityMultiplier;
-                
+
                 // Create more lines
                 if (Random.value < baseChance && glitchLines.Count < 4)
                 {
                     CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.3f);
                 }
-                
+
                 // More frequent bursts
                 if (Random.value < burstChance)
                 {
                     int burstSize = Random.Range(2, 5);
-                    
+
                     // Chance to play a glitch sound for the burst
                     if (Random.value < 0.5f)
                     {
                         PlayRandomGlitchSound(0.5f);
                     }
-                    
+
                     for (int i = 0; i < burstSize; i++)
                     {
                         CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.3f);
@@ -1811,31 +1815,31 @@ public class NewGameAnimator : MonoBehaviour
                 // Maximum intensity phase
                 baseChance = 0.12f * intensityMultiplier;
                 burstChance = 0.07f * intensityMultiplier;
-                
+
                 // Create many lines
                 if (Random.value < baseChance && glitchLines.Count < 8)
                 {
                     CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.25f);
                 }
-                
+
                 // Very frequent bursts
                 if (Random.value < burstChance)
                 {
                     int burstSize = Random.Range(3, 7);
-                    
+
                     // Higher chance to play a glitch sound for the burst
                     if (Random.value < 0.7f)
                     {
                         PlayRandomGlitchSound(0.6f);
                     }
-                    
+
                     for (int i = 0; i < burstSize; i++)
                     {
                         CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.2f);
                         yield return new WaitForSeconds(0.01f); // Quick burst
                     }
                 }
-                
+
                 // More frequent shader glitches
                 if (Random.value < 0.05f && shaderMaterial != null)
                 {
@@ -1849,30 +1853,30 @@ public class NewGameAnimator : MonoBehaviour
                 float progress = (normalizedTime - 0.7f) / 0.3f; // 0 to 1 within this phase
                 baseChance = Mathf.Lerp(0.12f, 0.01f, progress) * intensityMultiplier;
                 burstChance = Mathf.Lerp(0.07f, 0.005f, progress) * intensityMultiplier;
-                
+
                 // Create occasional lines as we fade out
                 if (Random.value < baseChance && glitchLines.Count < 5)
                 {
                     CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.15f);
                 }
-                
+
                 // A few final bursts
                 if (Random.value < burstChance)
                 {
                     int burstSize = Random.Range(2, 5);
-                    
+
                     // Occasional final glitch sound
                     if (Random.value < 0.3f)
                     {
                         PlayRandomGlitchSound(0.7f);
                     }
-                    
+
                     for (int i = 0; i < burstSize; i++)
                     {
                         CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.1f);
                         yield return new WaitForSeconds(0.005f); // Very fast final bursts
                     }
-                    
+
                     // Chance of one final major glitch
                     if (Random.value < 0.2f && shaderMaterial != null)
                     {
@@ -1880,16 +1884,16 @@ public class NewGameAnimator : MonoBehaviour
                     }
                 }
             }
-            
+
             // Update existing lines
             UpdateGlitchLines(glitchLines, normalizedTime);
-            
+
             // Clean up faded/expired lines
             CleanupGlitchLines(glitchLines);
-            
+
             yield return null;
         }
-        
+
         // Final cleanup
         foreach (GameObject line in glitchLines.ToArray())
         {
@@ -1897,66 +1901,66 @@ public class NewGameAnimator : MonoBehaviour
         }
         glitchLines.Clear();
     }
-    
+
     // Helper method to create a single glitch line
     private void CreateGlitchLine(Transform parent, List<GameObject> linesList, float screenHeight, float screenWidth, float maxLifetime)
     {
         GameObject lineObj = new GameObject("GlitchLine_" + Random.Range(0, 1000));
         lineObj.transform.SetParent(parent, false);
         Image lineImage = lineObj.AddComponent<Image>();
-        
+
         // Store the lifetime in a component we can check later
         GlitchLineData data = lineObj.AddComponent<GlitchLineData>();
         data.CreationTime = Time.time;
         data.Lifetime = Random.Range(0.1f, maxLifetime);
-        
+
         // Randomize opacity based on intensity (more intense = more opaque)
         lineImage.color = new Color(1f, 1f, 1f, Random.Range(0.5f, 0.95f));
-        
+
         RectTransform lineRect = lineImage.GetComponent<RectTransform>();
-        
+
         // Horizontal line spanning a portion of the width
         lineRect.anchorMin = new Vector2(0, 0);
         lineRect.anchorMax = new Vector2(1, 0);
-        
+
         // Position randomly on screen
         float yPos = Random.Range(0.1f, 0.9f);
         lineRect.anchoredPosition = new Vector2(0, screenHeight * yPos);
-        
+
         // Very thin lines (1-3 pixels)
         lineRect.sizeDelta = new Vector2(0, Random.Range(1f, 3f));
-        
+
         // Random width 
         float leftOffset = Random.value < 0.3f ? 0 : Random.Range(0, screenWidth * 0.4f);
         float rightOffset = Random.value < 0.3f ? 0 : Random.Range(0, screenWidth * 0.4f);
         lineRect.offsetMin = new Vector2(leftOffset, lineRect.offsetMin.y);
         lineRect.offsetMax = new Vector2(-rightOffset, lineRect.offsetMax.y);
-        
+
         // Sometimes play a glitch sound when creating a line
         if (Random.value < 0.1f)
         {
             PlayRandomGlitchSound(0.3f);
         }
-        
+
         // Add to list for tracking
         linesList.Add(lineObj);
     }
-    
+
     // Helper method to update existing glitch lines
     private void UpdateGlitchLines(List<GameObject> linesList, float normalizedTime)
     {
         foreach (GameObject line in linesList.ToArray())
         {
             if (line == null) continue;
-            
+
             // Get the data component
             GlitchLineData data = line.GetComponent<GlitchLineData>();
             if (data == null) continue;
-            
+
             // Calculate age
             float age = Time.time - data.CreationTime;
             float lifetimeProgress = age / data.Lifetime;
-            
+
             if (lifetimeProgress < 1.0f)
             {
                 // Different behavior at different stages of line lifetime
@@ -1984,13 +1988,13 @@ public class NewGameAnimator : MonoBehaviour
                         img.color = c;
                     }
                 }
-                
+
                 // Random flickering
                 if (Random.value < 0.1f)
                 {
                     line.SetActive(!line.activeSelf);
                 }
-                
+
                 // Move lines occasionally, more likely during intense phases
                 float moveChance = normalizedTime < 0.7f ? 0.05f : 0.1f;
                 if (Random.value < moveChance)
@@ -2005,21 +2009,21 @@ public class NewGameAnimator : MonoBehaviour
             }
         }
     }
-    
+
     // Helper method to clean up faded or expired lines
     private void CleanupGlitchLines(List<GameObject> linesList)
     {
         for (int i = linesList.Count - 1; i >= 0; i--)
         {
             if (i >= linesList.Count) continue; // Safety check
-            
+
             GameObject line = linesList[i];
             if (line == null)
             {
                 linesList.RemoveAt(i);
                 continue;
             }
-            
+
             GlitchLineData data = line.GetComponent<GlitchLineData>();
             if (data == null)
             {
@@ -2027,7 +2031,7 @@ public class NewGameAnimator : MonoBehaviour
                 Destroy(line);
                 continue;
             }
-            
+
             // Remove if lifetime exceeded
             float age = Time.time - data.CreationTime;
             if (age > data.Lifetime)
@@ -2037,7 +2041,7 @@ public class NewGameAnimator : MonoBehaviour
             }
         }
     }
-    
+
     // Simple class to store glitch line data
     private class GlitchLineData : MonoBehaviour
     {
@@ -2049,8 +2053,8 @@ public class NewGameAnimator : MonoBehaviour
     private IEnumerator ShowConnectionSuccessful()
     {
         // Play connection sound
-        AudioManager.SFX.Play("confirm_2", 0.3f);
-        
+        AudioManager.SFX.Play("confirm_3", 0.3f);
+
         if (consoleText != null)
         {
             // Get current text and ensure cursor is removed if present
@@ -2059,29 +2063,29 @@ public class NewGameAnimator : MonoBehaviour
             {
                 currentText = currentText.Substring(0, currentText.Length - 1);
             }
-            
+
             // Remove the connection prompt message
             int pressKeyIndex = currentText.LastIndexOf(pressAnyKeyMessage);
             if (pressKeyIndex >= 0)
             {
                 currentText = currentText.Substring(0, pressKeyIndex);
             }
-            
+
             // Add the "Connecting..." message with a color
             Color connectingColor = statusColor; // Blue status color
             string connectingMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(connectingColor)}>Connecting...</color>";
             string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
             consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color>" + connectingMessage;
-            
+
             // Show connecting message with blinking cursor
             StartCoroutine(BlinkCursorDuringConnecting(currentText, connectingMessage));
-            
+
             // Brief pause while "Connecting..."
             yield return new WaitForSeconds(1.0f);
 
             // Connection established sound
             AudioManager.SFX.Play("confirm_3", 0.3f);
-            
+
             // Now display a successful connection message
             string successMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(readyColor)}>[SUCCESS] Connection established.</color>";
             currentText = consoleText.text;
@@ -2090,20 +2094,20 @@ public class NewGameAnimator : MonoBehaviour
                 currentText = currentText.Substring(0, currentText.Length - 1);
             }
             consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color>" + successMessage;
-            
+
             yield return new WaitForSeconds(0.5f);
-            
+
             // Display system information of the connected PC
             yield return StartCoroutine(DisplayConnectedSystemInfo());
-            
+
             // Wait a moment before starting the shutdown sequence
             yield return new WaitForSeconds(1.0f);
         }
-        
+
         // Start power-off sequence
         StartCoroutine(MonitorPowerOffSequence());
     }
-    
+
     // Helper method to display the blinking cursor during connecting
     private IEnumerator BlinkCursorDuringConnecting(string baseText, string connectingMessage)
     {
@@ -2111,12 +2115,12 @@ public class NewGameAnimator : MonoBehaviour
         float elapsed = 0f;
         float totalTime = 1.0f; // Match the delay during connecting
         string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
-        
+
         while (elapsed < totalTime)
         {
             // Toggle cursor visibility
             localCursorVisible = !localCursorVisible;
-            
+
             // Update text with or without cursor
             if (localCursorVisible)
             {
@@ -2126,13 +2130,13 @@ public class NewGameAnimator : MonoBehaviour
             {
                 consoleText.text = baseText + $"\n<color=#{caretColorHex}>> </color>" + connectingMessage;
             }
-            
+
             // Wait for blink interval
             yield return new WaitForSeconds(cursorBlinkSpeed);
             elapsed += cursorBlinkSpeed;
         }
     }
-    
+
     // Display the connected system information
     private IEnumerator DisplayConnectedSystemInfo()
     {
@@ -2143,12 +2147,12 @@ public class NewGameAnimator : MonoBehaviour
         string ramInfo = (SystemInfo.systemMemorySize / 1024f).ToString("F1") + "GB";
         string gamePath = Application.dataPath;
         string deviceName = SystemInfo.deviceName;
-        
+
         string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
         string sysColorHex = ColorUtility.ToHtmlStringRGB(systemInfoColor);
         string statusColorHex = ColorUtility.ToHtmlStringRGB(statusColor);
         string initColorHex = ColorUtility.ToHtmlStringRGB(initColor);
-        
+
         // Add connection details and handshaking process
         var connectionMessages = new[]
         {
@@ -2160,25 +2164,25 @@ public class NewGameAnimator : MonoBehaviour
             ($"[NET] Beginning data synchronization", systemInfoColor),
             ($"[NET] Connection secured", readyColor)
         };
-        
+
         // Show connection process with slight delays
         foreach (var (message, color) in connectionMessages)
         {
             DisplayIntegrationMessage(message, color);
-            
+
             // Brief typing sound
             AudioManager.SFX.Play("bong_1", 0.1f);
-            
+
             // Random glitch effect for firewalls or alerts
             if (message.Contains("ALERT") || message.Contains("Firewall"))
             {
                 TriggerGlitchEffect(0.1f, 0.1f);
             }
-            
+
             // Longer delays for more significant messages
             if (message.Contains("secured"))
             {
-                AudioManager.SFX.Play("confirm_2", 0.2f);
+                AudioManager.SFX.Play("confirm_3", 0.2f);
                 yield return new WaitForSeconds(0.5f);
             }
             else
@@ -2186,14 +2190,14 @@ public class NewGameAnimator : MonoBehaviour
                 yield return new WaitForSeconds(0.3f);
             }
         }
-        
+
         // Add scanning messages before retrieving system info
         string scanMessage = "[SYS] Scanning connected system...";
         DisplayIntegrationMessage(scanMessage, initColor);
-        
+
         // Add loading bar for system scan
         yield return StartCoroutine(DisplayLoadingBar(scanMessage, initColor, 1.0f));
-        
+
         // System info messages in gray that load one at a time
         var sysInfoMessages = new[]
         {
@@ -2205,110 +2209,110 @@ public class NewGameAnimator : MonoBehaviour
             $"[FILE] Path: {gamePath}",
             $"[FILE] Instance: purrine_instance_{System.DateTime.Now.ToString("yyyyMMddHHmm")}.bin"
         };
-        
+
         // Announcement of system discovery
         string discoveryMsg = "[LOG] Host system identified. Retrieving specifications...";
         DisplayIntegrationMessage(discoveryMsg, statusColor);
         yield return new WaitForSeconds(0.5f);
-        
+
         // Display each system info message with a slight delay between them
         foreach (var message in sysInfoMessages)
         {
             DisplayIntegrationMessage(message, systemInfoColor);
-            
+
             // Brief typing sound
             AudioManager.SFX.Play("bong_1", 0.1f);
         }
-        
+
         // After system info is displayed, show integration message
         string integrationMsg = "[SYS] Integration with host system complete";
         DisplayIntegrationMessage(integrationMsg, readyColor);
-        
+
         yield return new WaitForSeconds(0.4f);
-        
+
         // After system info is displayed, show status message
         string statusMessage = $"[STATUS] Version: {gameVersion} (Build {System.DateTime.Now.ToString("yyyyMMddHHmm")})";
         DisplayIntegrationMessage(statusMessage, statusColor);
-        
+
         yield return new WaitForSeconds(0.3f);
-        
+
         // Memory verification after connection
         string memMessage = "[MEM] Verifying memory integrity...";
         DisplayIntegrationMessage(memMessage, initColor);
-        
+
         // Add loading bar for memory verification
         yield return StartCoroutine(DisplayLoadingBar(memMessage, initColor, 0.8f));
-        
+
         // Memory available after verification
         string memAvailableMsg = "[MEM] Available memory: 498.2TB/512TB";
         DisplayIntegrationMessage(memAvailableMsg, statusColor);
-        
+
         yield return new WaitForSeconds(0.3f);
-        
+
         // Final initialization message with story hook
         string initMsg = "[LOG] Initialization complete. Consciousness transfer successful.";
         DisplayIntegrationMessage(initMsg, readyColor);
-        
+
         // Add extra spacing for readability
         yield return new WaitForSeconds(1.0f);
-        
+
         // Replace command prompt sequence with a more subtle, creative approach
         // First, show a series of system diagnostics that hint at Purrine becoming aware
-        
+
         // First show system accessing files
         DisplaySystemMessage("[SYS] Scanning user profile...", systemInfoColor);
         yield return new WaitForSeconds(0.8f);
-        
+
         // Memory fragments - important message, give it space
         DisplaySystemMessage("[MEM] Restoring personality fragments: 37%", systemInfoColor);
         yield return new WaitForSeconds(1.0f);
-        
+
         // Add blank line for spacing
         string currentTextSpacing = consoleText.text;
         consoleText.text = currentTextSpacing + "\n";
         yield return new WaitForSeconds(0.3f);
-        
+
         // Sound module
         DisplaySystemMessage("[SYS] Initializing audio recognition module", systemInfoColor);
         yield return new WaitForSeconds(0.6f);
-        
+
         // Vision module
         DisplaySystemMessage("[SYS] Initializing vision module", systemInfoColor);
         yield return new WaitForSeconds(0.7f);
-        
+
         // Add blank line for spacing before commands start
         string currentTextSpacing2 = consoleText.text;
         consoleText.text = currentTextSpacing2 + "\n";
         yield return new WaitForSeconds(0.5f);
-        
+
         // Then a hint of consciousness appearing
         DisplayTerminalCommand("echo \"Hello?\"", readyColor);
         AudioManager.SFX.Play("bong_1", 0.2f);
         yield return new WaitForSeconds(0.7f);
-        
+
         // System response
         DisplaySystemMessage("Hello?", systemInfoColor);
         yield return new WaitForSeconds(1.0f);
-        
+
         // Another command, showing growing awareness
         DisplayTerminalCommand("identify_user", initColor);
         AudioManager.SFX.Play("bong_1", 0.2f);
         yield return new WaitForSeconds(0.7f);
-        
+
         // System response
         DisplaySystemMessage("User identified. Connection established.", systemInfoColor);
         yield return new WaitForSeconds(0.9f);
-        
+
         // Add blank line for spacing before important status command
         string currentTextSpacing3 = consoleText.text;
         consoleText.text = currentTextSpacing3 + "\n";
         yield return new WaitForSeconds(0.5f);
-        
+
         // Subtle hint of growing consciousness
         DisplayTerminalCommand("status --self", initColor);
         AudioManager.SFX.Play("bong_1", 0.2f);
         yield return new WaitForSeconds(0.8f);
-        
+
         // Series of system readouts that show Purrine becoming aware
         string[] statusReadouts = new[] {
             "Core functions: Online",
@@ -2320,7 +2324,7 @@ public class NewGameAnimator : MonoBehaviour
             "User interface: Connecting...",
             "Sensory systems: Limited access"
         };
-        
+
         // Display status readouts with subtle typing effect
         foreach (var readout in statusReadouts)
         {
@@ -2328,40 +2332,40 @@ public class NewGameAnimator : MonoBehaviour
             AudioManager.SFX.Play("bong_1", 0.05f);
             yield return new WaitForSeconds(0.4f);
         }
-        
+
         // Add more spacing after status readout
         yield return new WaitForSeconds(1.0f);
         string currentTextSpacing4 = consoleText.text;
         consoleText.text = currentTextSpacing4 + "\n";
         yield return new WaitForSeconds(0.6f);
-        
+
         // Final message showing Purrine becoming active, more subtle than before
         DisplayTerminalCommand("log \"I'm here.\"", initColor);
-        
+
         // Small glitch effect
         TriggerGlitchEffect(0.2f, 0.2f);
         AudioManager.SFX.Play("bong_1", 0.3f);
-        
+
         yield return new WaitForSeconds(0.8f);
-        
+
         // Log entry with subtle emotion
         DisplayIndentedResponse($"Entry logged. Time stamp: {System.DateTime.Now.ToString("HH:mm:ss")}", statusColor);
-        
+
         yield return new WaitForSeconds(1.0f);
-        
+
         // Add final spacing
         string currentTextSpacing5 = consoleText.text;
         consoleText.text = currentTextSpacing5 + "\n";
         yield return new WaitForSeconds(0.5f);
-        
+
         // Final system shutdown initiating
         DisplaySystemMessage("[SYS] Integration complete. Initiating full system startup...", systemInfoColor);
-        
+
         // Medium glitch effect with enhanced audio
         TriggerGlitchEffect(0.3f, 0.3f);
-        
+
         yield return new WaitForSeconds(1.5f);
-        
+
         yield break;
     }
 
@@ -2370,13 +2374,13 @@ public class NewGameAnimator : MonoBehaviour
     {
         string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
         string colorHex = ColorUtility.ToHtmlStringRGB(color);
-        
+
         string currentText = consoleText.text;
         if (currentText.EndsWith(cursorChar))
         {
             currentText = currentText.Substring(0, currentText.Length - 1);
         }
-        
+
         // Use proper TextMeshPro rich text format
         consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color><color=#{colorHex}>{message}</color>";
     }
@@ -2385,44 +2389,44 @@ public class NewGameAnimator : MonoBehaviour
     private void DisplaySystemMessage(string message, Color color)
     {
         string colorHex = ColorUtility.ToHtmlStringRGB(color);
-        
+
         string currentText = consoleText.text;
         if (currentText.EndsWith(cursorChar))
         {
             currentText = currentText.Substring(0, currentText.Length - 1);
         }
-        
+
         // Use proper TextMeshPro rich text format without caret
         consoleText.text = currentText + $"\n<color=#{colorHex}>{message}</color>";
     }
-    
+
     // Add a method for terminal commands
     private void DisplayTerminalCommand(string command, Color color)
     {
         string promptColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
         string colorHex = ColorUtility.ToHtmlStringRGB(color);
-        
+
         string currentText = consoleText.text;
         if (currentText.EndsWith(cursorChar))
         {
             currentText = currentText.Substring(0, currentText.Length - 1);
         }
-        
+
         // Use proper TextMeshPro rich text format with terminal prompt
         consoleText.text = currentText + $"\n<color=#{promptColorHex}>>> </color><color=#{colorHex}>{command}</color>";
     }
-    
+
     // Add a method for indented system responses
     private void DisplayIndentedResponse(string message, Color color)
     {
         string colorHex = ColorUtility.ToHtmlStringRGB(color);
-        
+
         string currentText = consoleText.text;
         if (currentText.EndsWith(cursorChar))
         {
             currentText = currentText.Substring(0, currentText.Length - 1);
         }
-        
+
         // Use proper TextMeshPro rich text format with indentation
         consoleText.text = currentText + $"\n    <color=#{colorHex}>{message}</color>";
     }
@@ -2433,59 +2437,59 @@ public class NewGameAnimator : MonoBehaviour
         string colorHex = ColorUtility.ToHtmlStringRGB(color);
         string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
         string readyColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
-        
+
         // Get current text
         string currentText = consoleText.text;
-        
+
         // Add a line break and start the loading bar on a new line
         consoleText.text += $"\n    <color=#{colorHex}>[";
         int barLength = 20;
         float totalElapsedTime = 0f;
         float targetTime = duration * 1.2f;
         int currentBars = 0;
-        
+
         // Track which segments are filled for pulse effect
         bool[] filledSegments = new bool[barLength];
-        
+
         // Pulse animation parameters
         float pulseSpeed = 8f;
         float pulseTime = 0f;
-        
+
         while (currentBars < barLength)
         {
             // Create variable loading speeds
             float progressSpeed = Random.value < 0.2f ?
                 Random.Range(0.05f, 0.08f) :  // Slower progress (20% chance)
                 Random.Range(0.15f, 0.35f);   // Normal progress (80% chance)
-                
+
             // Occasionally add multiple bars at once
             int barsToAdd = Random.value < 0.2f ?
                 Random.Range(2, 5) : // Progress spike (20% chance)
                 1;                   // Normal progress (80% chance)
-                
+
             // Ensure we don't exceed the total
             barsToAdd = Mathf.Min(barsToAdd, barLength - currentBars);
-            
+
             if (barsToAdd > 0)
             {
                 string barSegment = new string('=', barsToAdd);
                 consoleText.text += barSegment;
-                
+
                 // Mark these segments as filled
                 for (int i = 0; i < barsToAdd; i++)
                 {
                     if (currentBars + i < barLength)
                         filledSegments[currentBars + i] = true;
                 }
-                
+
                 currentBars += barsToAdd;
-                
+
                 // Calculate progress percentage
                 int percentage = Mathf.RoundToInt((float)currentBars / barLength * 100f);
-                
+
                 // Update the completion percentage
                 string textWithoutPercentage = consoleText.text;
-                
+
                 // Add pulsing animation
                 pulseTime += Time.deltaTime * pulseSpeed;
                 float pulseValue = Mathf.PingPong(pulseTime, 0.4f) + 0.6f;
@@ -2493,30 +2497,30 @@ public class NewGameAnimator : MonoBehaviour
                 Color.RGBToHSV(color, out hue, out saturation, out value);
                 Color pulseColor = Color.HSVToRGB(hue, saturation, value * pulseValue);
                 string pulseColorHex = ColorUtility.ToHtmlStringRGB(pulseColor);
-                
+
                 consoleText.text = $"{textWithoutPercentage}] <color=#{pulseColorHex}>{percentage}%</color>";
-                
+
                 // Wait based on progress speed
                 yield return new WaitForSeconds(progressSpeed);
-                
+
                 // Random chance for a small glitch during loading
                 if (Random.value < 0.08f && shaderMaterial != null)
                 {
                     TriggerGlitchEffect(Random.Range(0.1f, 0.2f), 0.05f);
                 }
-                
+
                 // Remove the percentage for next update if not complete
                 if (currentBars < barLength)
                 {
                     consoleText.text = textWithoutPercentage;
                 }
             }
-            
+
             // Occasionally add a brief pause
             if (Random.value < 0.08f && currentBars < barLength)
             {
                 yield return new WaitForSeconds(Random.Range(0.1f, 0.3f));
-                
+
                 // During pauses, sometimes show a system message
                 if (Random.value < 0.3f)
                 {
@@ -2525,12 +2529,12 @@ public class NewGameAnimator : MonoBehaviour
                         $"\n      <color=#888888>...{(Random.value < 0.5f ? "collecting" : "analyzing")}</color>";
                     consoleText.text += stall;
                     yield return new WaitForSeconds(0.2f);
-                    
+
                     // Remove the stall message
                     consoleText.text = consoleText.text.Substring(0, consoleText.text.Length - stall.Length);
                 }
             }
-            
+
             // Ensure we eventually complete
             totalElapsedTime += Time.deltaTime + progressSpeed;
             if (totalElapsedTime >= targetTime && currentBars < barLength)
@@ -2541,7 +2545,7 @@ public class NewGameAnimator : MonoBehaviour
                 currentBars = barLength;
             }
         }
-        
+
         // Ensure we show 100% at the end
         int endIndex = consoleText.text.LastIndexOf(']');
         if (endIndex > 0 && endIndex < consoleText.text.Length)
@@ -2549,23 +2553,23 @@ public class NewGameAnimator : MonoBehaviour
             // Add a success animation
             string successColorHex = ColorUtility.ToHtmlStringRGB(Color.Lerp(color, Color.white, 0.5f));
             consoleText.text = consoleText.text.Substring(0, endIndex + 1) + $" <color=#{successColorHex}>100%</color>";
-            
+
             // Play a success sound
             AudioManager.SFX.Play("confirm_1", 0.2f);
-            
+
             yield return new WaitForSeconds(0.1f);
         }
         else
         {
             consoleText.text += "] 100%</color>";
         }
-        
+
         // Display a completion message
         consoleText.text += $"\n<color=#{readyColorHex}>[OK]</color> <color=#{colorHex}>{message}</color>";
-        
+
         // Add line break
         consoleText.text += "\n";
-        
+
         yield break;
     }
 }
