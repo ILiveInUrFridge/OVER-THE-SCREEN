@@ -1213,10 +1213,10 @@ public class NewGameAnimator : MonoBehaviour
             AudioManager.SFX.Play("bong_1", 0.2f);
 
             // Brief normal pause as if everything is fine
-            yield return new WaitForSeconds(0.8f);
+            yield return new WaitForSeconds(1.0f); // Extended from 0.8f for less sudden pacing
 
             // Slight unexpected glitch - first sign something is wrong
-            TriggerGlitchEffect(0.2f, 0.1f);
+            TriggerGlitchEffect(0.2f, 0.15f); // Increased duration from 0.1f
 
             // First text corruption - just a character or two
             if (consoleText != null)
@@ -1226,11 +1226,11 @@ public class NewGameAnimator : MonoBehaviour
                 consoleText.text = CorruptText(currentText, 0.01f);
             }
 
-            // Return to normal briefly
-            yield return new WaitForSeconds(0.6f);
+            // Return to normal briefly, but a bit longer - builds anticipation
+            yield return new WaitForSeconds(0.8f); // Extended from 0.6f
 
             // Another small glitch - things are getting unstable
-            TriggerGlitchEffect(0.25f, 0.15f);
+            TriggerGlitchEffect(0.25f, 0.2f); // Increased duration from 0.15f
 
             // Second text corruption - a bit more noticeable
             if (consoleText != null)
@@ -1241,15 +1241,15 @@ public class NewGameAnimator : MonoBehaviour
             }
 
             // Brief pause
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.5f); // Extended from 0.4f
 
             // Stage 1: Subtle instability (small flicker) - keep text visible
             PlayRandomGlitchSound(0.3f);
             AudioManager.SFX.Play("pink_noise_2", 0.1f);
 
             // First subtle shader adjustment
-            shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 1.5f);
-            shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 1.2f);
+            shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 1.3f); // Reduced from 1.5f for smoother progression
+            shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 1.1f); // Reduced from 1.2f
 
             // Small screen flicker
             if (transitionImage != null)
@@ -1265,20 +1265,20 @@ public class NewGameAnimator : MonoBehaviour
             if (consoleText != null)
             {
                 string currentText = consoleText.text;
-                // More aggressive corruption (7%)
-                consoleText.text = CorruptText(currentText, 0.07f);
+                // More aggressive corruption (5%) - reduced from 7% for smoother progression
+                consoleText.text = CorruptText(currentText, 0.05f);
             }
 
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.5f); // Extended from 0.4f
 
             // Stage 2: Medium instability (more obvious glitches) - text still visible
             PlayRandomGlitchSound(0.4f);
 
-            // Second shader adjustment
-            shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 2.5f);
-            shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 1.8f);
-            shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 1.3f);
-            shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 1.3f);
+            // Second shader adjustment - more gradual increase
+            shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 2.0f); // Reduced from 2.5f for smoother progression
+            shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 1.5f); // Reduced from 1.8f 
+            shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 1.2f); // Reduced from 1.3f
+            shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 1.2f); // Reduced from 1.3f
 
             // Medium screen flicker with text jitter
             if (transitionImage != null && consoleText != null)
@@ -1293,10 +1293,10 @@ public class NewGameAnimator : MonoBehaviour
 
                     // Progressive text corruption during jitter
                     string currentText = consoleText.text;
-                    float corruptionLevel = 0.1f + (i * 0.05f); // Increasing corruption (10%, 15%, 20%)
+                    float corruptionLevel = 0.08f + (i * 0.04f); // Smoother corruption progression (8%, 12%, 16%) instead of (10%, 15%, 20%)
                     consoleText.text = CorruptText(currentText, corruptionLevel);
 
-                    yield return new WaitForSeconds(0.05f);
+                    yield return new WaitForSeconds(0.06f); // Increased from 0.05f for smoother feel
                 }
 
                 textRect.anchoredPosition = originalTextPosition;
@@ -1309,7 +1309,7 @@ public class NewGameAnimator : MonoBehaviour
                 transitionImage.color = originalColor;
             }
 
-            yield return new WaitForSeconds(0.3f);
+            yield return new WaitForSeconds(0.4f); // Extended from 0.3f
 
             // Final pre-shutdown warning
             // Trigger one medium glitch line while text is still visible
@@ -1324,15 +1324,15 @@ public class NewGameAnimator : MonoBehaviour
                 consoleText.text = CorruptText(currentText, 0.25f);
             }
 
-            yield return new WaitForSeconds(0.15f);
+            yield return new WaitForSeconds(0.25f); // Extended from 0.15f
         }
 
         // Now proceed with more intense glitches while text is still visible
         // Play switch-off sound
         AudioManager.SFX.Play("switch_6", 0.2f);
 
-        // Fade out computer hum sound
-        AudioManager.Music.FadeOutMusic(0.5f); // Faster fade of music
+        // Fade out computer hum sound gradually
+        AudioManager.Music.FadeOutMusic(0.7f); // Slower fade of music (increased from 0.5f)
 
         // Initial glitch sound
         PlayRandomGlitchSound(0.6f);
@@ -1340,12 +1340,12 @@ public class NewGameAnimator : MonoBehaviour
         AudioManager.SFX.Play("pink_noise_2", 0.3f);
 
         // Let the sound play for a moment before effects start
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.15f); // Increased from 0.1f
 
         // Start progressive text corruption for the final phase
         if (consoleText != null)
         {
-            StartCoroutine(ProgressiveTextCorruption(0.7f));
+            StartCoroutine(ProgressiveTextCorruption(1.0f)); // Extended from 0.7f for a more gradual corruption
         }
 
         // Increase CRT glitch effects while text is still visible
@@ -1357,15 +1357,16 @@ public class NewGameAnimator : MonoBehaviour
             float originalCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
             float originalCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
 
-            // Increase values for shutdown effect
-            shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 5f);
-            shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 4f);
-            shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 2.5f);
-            shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 2.5f);
+            // Increase values for shutdown effect - more gradually
+            shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 3.5f); // Reduced from 5f for more gradual effect
+            shaderMaterial.SetFloat("_GlitchSpeed", originalGlitchSpeed * 3f); // Reduced from 4f 
+            shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX * 2f); // Reduced from 2.5f
+            shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY * 2f); // Reduced from 2.5f
         }
 
-        // Add glitch lines while the text is still visible
-        StartCoroutine(CreateGlitchLines(transitionImage.transform, 0.8f));
+        // Start glitch lines coroutine and store the reference so we can stop it when the screen goes black
+        // Extended duration from 0.8f to 1.2f for a less sudden effect
+        Coroutine glitchLinesCoroutine = StartCoroutine(CreateGlitchLines(transitionImage.transform, 1.2f));
 
         // Rapidly jitter the text during the glitch effect
         if (consoleText != null)
@@ -1374,38 +1375,24 @@ public class NewGameAnimator : MonoBehaviour
             Vector2 originalPos = textRect.anchoredPosition;
 
             // Violent text jitter for a brief moment
-            float jitterDuration = 0.4f;
+            float jitterDuration = 0.6f; // Extended from 0.4f
             float jitterElapsed = 0f;
 
             while (jitterElapsed < jitterDuration)
             {
                 jitterElapsed += Time.deltaTime;
-
-                // More extreme jitter as time progresses
-                float intensity = Mathf.Lerp(3f, 12f, jitterElapsed / jitterDuration);
+                
+                // More violent jitter as we progress, but with a more natural curve
+                float progressCurve = Mathf.SmoothStep(0, 1, jitterElapsed / jitterDuration); // Smoother ramp-up using SmoothStep
+                float jitterAmount = Mathf.Lerp(3f, 15f, progressCurve); // Start at 3f instead of 5f for smoother progression
                 textRect.anchoredPosition = originalPos + new Vector2(
-                    Random.Range(-intensity, intensity),
-                    Random.Range(-intensity, intensity)
+                    Random.Range(-jitterAmount, jitterAmount),
+                    Random.Range(-jitterAmount, jitterAmount)
                 );
-
-                // Random color distortion
-                if (Random.value < 0.3f)
-                {
-                    consoleText.color = new Color(
-                        1f,
-                        Random.Range(0.8f, 1f),
-                        Random.Range(0.8f, 1f),
-                        1f
-                    );
-                }
-                else
-                {
-                    consoleText.color = Color.white;
-                }
 
                 // Extreme text corruption during violent jitter
                 string currentText = consoleText.text;
-                float corruptionFactor = Mathf.Lerp(0.3f, 0.7f, jitterElapsed / jitterDuration);
+                float corruptionFactor = Mathf.Lerp(0.3f, 0.7f, progressCurve);
                 consoleText.text = CorruptText(currentText, corruptionFactor);
 
                 yield return null;
@@ -1420,10 +1407,10 @@ public class NewGameAnimator : MonoBehaviour
         }
 
         // Final massive glitch before shutdown
-        TriggerGlitchEffect(1.5f, 0.15f);
+        TriggerGlitchEffect(1.5f, 0.2f); // Extended duration from 0.15f
         PlayRandomGlitchSound(0.8f);
 
-        yield return new WaitForSeconds(0.15f);
+        yield return new WaitForSeconds(0.2f); // Extended from 0.15f
 
         // Screen tear effect - optional but looks cool
         if (consoleText != null && transitionImage != null)
@@ -1446,6 +1433,39 @@ public class NewGameAnimator : MonoBehaviour
             // Destroy the tear
             Destroy(tearObj);
         }
+
+        // Stop the glitch lines coroutine before going to black screen
+        if (glitchLinesCoroutine != null)
+        {
+            StopCoroutine(glitchLinesCoroutine);
+        }
+
+        // Find and destroy any existing glitch lines
+        foreach (Transform child in transitionImage.transform)
+        {
+            if (child.name.StartsWith("GlitchLine_"))
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        // Brief moment of total calm - "fuse-off" effect
+        // Everything stops for a moment before the final shutdown
+        if (shaderMaterial != null)
+        {
+            // Reset some shader properties to create sudden stability
+            shaderMaterial.SetFloat("_GlitchIntensity", 0.01f);
+            shaderMaterial.SetFloat("_GlitchSpeed", 0.01f);
+        }
+
+        // Brief pause with no glitches
+        yield return new WaitForSeconds(0.4f);
+
+        // Play a distinct electrical "pop" sound
+        AudioManager.SFX.Play("tv_off_1_dry", 0.7f);
+
+        // Very brief pause
+        yield return new WaitForSeconds(0.1f);
 
         // SUDDEN BLACK SCREEN - simulating monitor abruptly losing power
         if (transitionImage != null)
@@ -1747,13 +1767,15 @@ public class NewGameAnimator : MonoBehaviour
 
         // Multiple phases of the glitch effect
         float totalTime = 0;
-        float intensityMultiplier = 2.0f; // More intense glitches overall
+        float intensityMultiplier = 2.5f; // Reduced from 3.0 for less intensity overall but more gradual buildup
 
-        // Define the glitch intensity over time - quicker and more intense sequence
-        // 0-0.2: Initial subtle glitches
-        // 0.2-0.5: Increasing intensity
-        // 0.5-0.7: Peak intensity with bursts
-        // 0.7-1.0: Quick fadeout
+        // Define the glitch intensity over time with more phases for more gradual progression
+        // 0-0.15: Very subtle initial glitches
+        // 0.15-0.3: Slight increase, still subtle
+        // 0.3-0.5: Moderate buildup
+        // 0.5-0.75: Steadier increase to high intensity
+        // 0.75-0.9: Peak intensity with bursts
+        // 0.9-1.0: Quick fadeout
 
         while (totalTime < duration)
         {
@@ -1764,29 +1786,55 @@ public class NewGameAnimator : MonoBehaviour
             float baseChance = 0;
             float burstChance = 0;
 
-            // Phase 1: Initial subtle glitches (0-20% of duration)
-            if (normalizedTime < 0.2f)
+            // Phase 1: Very subtle initial glitches (0-15% of duration)
+            if (normalizedTime < 0.15f)
             {
-                // Start with slightly more glitching immediately
-                baseChance = 0.02f * intensityMultiplier;
+                // Very minimal starting glitches
+                baseChance = 0.03f * intensityMultiplier;
                 burstChance = 0.01f * intensityMultiplier;
 
-                // Create more lines from the start
+                // Create occasional early lines
                 if (Random.value < baseChance && glitchLines.Count < 2)
                 {
                     CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.2f);
                 }
             }
-            // Phase 2: Building up (20-50% of duration)
+            // Phase 2: Slight increase but still subtle (15-30% of duration)
+            else if (normalizedTime < 0.3f)
+            {
+                // Slight increase
+                float progress = (normalizedTime - 0.15f) / 0.15f; // 0 to 1 within this phase
+                baseChance = Mathf.Lerp(0.03f, 0.07f, progress) * intensityMultiplier;
+                burstChance = Mathf.Lerp(0.01f, 0.03f, progress) * intensityMultiplier;
+                
+                // Create a few more lines
+                if (Random.value < baseChance && glitchLines.Count < 3)
+                {
+                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.25f);
+                }
+                
+                // Small early bursts
+                if (Random.value < burstChance)
+                {
+                    int burstSize = Random.Range(1, 3);
+                    
+                    for (int i = 0; i < burstSize; i++)
+                    {
+                        CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.15f);
+                        yield return new WaitForSeconds(0.03f); // Slower bursts at beginning
+                    }
+                }
+            }
+            // Phase 3: Moderate buildup (30-50% of duration)
             else if (normalizedTime < 0.5f)
             {
-                // More rapidly increasing intensity
-                float progress = (normalizedTime - 0.2f) / 0.3f; // 0 to 1 within this phase
-                baseChance = Mathf.Lerp(0.02f, 0.08f, progress) * intensityMultiplier;
-                burstChance = Mathf.Lerp(0.01f, 0.04f, progress) * intensityMultiplier;
+                // Moderate increase
+                float progress = (normalizedTime - 0.3f) / 0.2f; // 0 to 1 within this phase
+                baseChance = Mathf.Lerp(0.07f, 0.12f, progress) * intensityMultiplier;
+                burstChance = Mathf.Lerp(0.03f, 0.06f, progress) * intensityMultiplier;
 
                 // Create more lines
-                if (Random.value < baseChance && glitchLines.Count < 4)
+                if (Random.value < baseChance && glitchLines.Count < 5)
                 {
                     CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.3f);
                 }
@@ -1794,27 +1842,28 @@ public class NewGameAnimator : MonoBehaviour
                 // More frequent bursts
                 if (Random.value < burstChance)
                 {
-                    int burstSize = Random.Range(2, 5);
+                    int burstSize = Random.Range(2, 4);
 
                     // Chance to play a glitch sound for the burst
-                    if (Random.value < 0.5f)
+                    if (Random.value < 0.4f)
                     {
-                        PlayRandomGlitchSound(0.5f);
+                        PlayRandomGlitchSound(0.4f);
                     }
 
                     for (int i = 0; i < burstSize; i++)
                     {
                         CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.3f);
-                        yield return new WaitForSeconds(0.01f); // Faster bursts
+                        yield return new WaitForSeconds(0.02f); // Moderate burst speed
                     }
                 }
             }
-            // Phase 3: Peak intensity (50-70% of duration)
-            else if (normalizedTime < 0.7f)
+            // Phase 4: Steadier increase to high intensity (50-75% of duration)
+            else if (normalizedTime < 0.75f)
             {
-                // Maximum intensity phase
-                baseChance = 0.12f * intensityMultiplier;
-                burstChance = 0.07f * intensityMultiplier;
+                // Higher intensity
+                float progress = (normalizedTime - 0.5f) / 0.25f; // 0 to 1 within this phase
+                baseChance = Mathf.Lerp(0.12f, 0.18f, progress) * intensityMultiplier;
+                burstChance = Mathf.Lerp(0.06f, 0.1f, progress) * intensityMultiplier;
 
                 // Create many lines
                 if (Random.value < baseChance && glitchLines.Count < 8)
@@ -1822,10 +1871,47 @@ public class NewGameAnimator : MonoBehaviour
                     CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.25f);
                 }
 
+                // Frequent bursts
+                if (Random.value < burstChance)
+                {
+                    int burstSize = Random.Range(3, 6);
+
+                    // Higher chance to play a glitch sound for the burst
+                    if (Random.value < 0.6f)
+                    {
+                        PlayRandomGlitchSound(0.5f);
+                    }
+
+                    for (int i = 0; i < burstSize; i++)
+                    {
+                        CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.2f);
+                        yield return new WaitForSeconds(0.015f); // Faster bursts
+                    }
+                }
+
+                // Occasional shader glitches
+                if (Random.value < 0.05f && shaderMaterial != null)
+                {
+                    TriggerGlitchEffect(Random.Range(0.6f, 1.0f), 0.08f);
+                }
+            }
+            // Phase 5: Peak intensity (75-90% of duration)
+            else if (normalizedTime < 0.9f)
+            {
+                // Maximum intensity phase
+                baseChance = 0.2f * intensityMultiplier;
+                burstChance = 0.12f * intensityMultiplier;
+
+                // Create many lines
+                if (Random.value < baseChance && glitchLines.Count < 12) 
+                {
+                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.25f);
+                }
+
                 // Very frequent bursts
                 if (Random.value < burstChance)
                 {
-                    int burstSize = Random.Range(3, 7);
+                    int burstSize = Random.Range(4, 8);
 
                     // Higher chance to play a glitch sound for the burst
                     if (Random.value < 0.7f)
@@ -1836,51 +1922,39 @@ public class NewGameAnimator : MonoBehaviour
                     for (int i = 0; i < burstSize; i++)
                     {
                         CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.2f);
-                        yield return new WaitForSeconds(0.01f); // Quick burst
+                        yield return new WaitForSeconds(0.01f); // Quicker burst
                     }
                 }
 
                 // More frequent shader glitches
-                if (Random.value < 0.05f && shaderMaterial != null)
+                if (Random.value < 0.08f && shaderMaterial != null)
                 {
-                    TriggerGlitchEffect(Random.Range(0.7f, 1.2f), 0.08f);
+                    TriggerGlitchEffect(Random.Range(0.8f, 1.3f), 0.08f);
                 }
             }
-            // Phase 4: Rapid fadeout (70-100% of duration)
+            // Phase 6: Rapid fadeout (90-100% of duration)
             else
             {
                 // Quick decrease in intensity
-                float progress = (normalizedTime - 0.7f) / 0.3f; // 0 to 1 within this phase
-                baseChance = Mathf.Lerp(0.12f, 0.01f, progress) * intensityMultiplier;
-                burstChance = Mathf.Lerp(0.07f, 0.005f, progress) * intensityMultiplier;
+                float progress = (normalizedTime - 0.9f) / 0.1f; // 0 to 1 within this phase
+                baseChance = Mathf.Lerp(0.2f, 0.05f, progress) * intensityMultiplier;
+                burstChance = Mathf.Lerp(0.12f, 0.03f, progress) * intensityMultiplier;
 
                 // Create occasional lines as we fade out
-                if (Random.value < baseChance && glitchLines.Count < 5)
+                if (Random.value < baseChance && glitchLines.Count < 6)
                 {
-                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.15f);
+                    CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.1f);
                 }
 
                 // A few final bursts
                 if (Random.value < burstChance)
                 {
-                    int burstSize = Random.Range(2, 5);
-
-                    // Occasional final glitch sound
-                    if (Random.value < 0.3f)
-                    {
-                        PlayRandomGlitchSound(0.7f);
-                    }
+                    int burstSize = Random.Range(2, 4);
 
                     for (int i = 0; i < burstSize; i++)
                     {
-                        CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.1f);
-                        yield return new WaitForSeconds(0.005f); // Very fast final bursts
-                    }
-
-                    // Chance of one final major glitch
-                    if (Random.value < 0.2f && shaderMaterial != null)
-                    {
-                        TriggerGlitchEffect(1.5f, 0.1f);
+                        CreateGlitchLine(parent, glitchLines, screenHeight, screenWidth, 0.08f);
+                        yield return new WaitForSeconds(0.008f);
                     }
                 }
             }
@@ -1894,7 +1968,7 @@ public class NewGameAnimator : MonoBehaviour
             yield return null;
         }
 
-        // Final cleanup
+        // Final cleanup - ensure all lines are destroyed
         foreach (GameObject line in glitchLines.ToArray())
         {
             Destroy(line);
@@ -2087,7 +2161,7 @@ public class NewGameAnimator : MonoBehaviour
             AudioManager.SFX.Play("confirm_3", 0.3f);
 
             // Now display a successful connection message
-            string successMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(readyColor)}>[SUCCESS] Connection established.</color>";
+            string successMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(bootColor)}>[SUCCESS] Connection established.</color>";
             currentText = consoleText.text;
             if (currentText.EndsWith(cursorChar))
             {
