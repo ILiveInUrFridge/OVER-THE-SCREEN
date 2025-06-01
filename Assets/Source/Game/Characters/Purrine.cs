@@ -15,10 +15,11 @@ namespace Game.Characters
         private const int MAX_STAT = 100;
         
         [SerializeField] private int affection;
+        [SerializeField] private int trust;
         [SerializeField] private int lust;
         [SerializeField] private int hatred;
-        [SerializeField] private int trust;
         [SerializeField] private int fear;
+        [SerializeField] private int obedience;
         [SerializeField] private int energy;
         [SerializeField] private int hunger;
         [SerializeField] private int sanitation;

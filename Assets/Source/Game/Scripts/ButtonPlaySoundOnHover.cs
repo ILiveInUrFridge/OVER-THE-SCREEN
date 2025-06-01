@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine.UI; // Added for UI components
+
 using Game.Audio;
-using Utilities;
 
 /// <summary>
 /// Component that plays a sound when the UI element is hovered

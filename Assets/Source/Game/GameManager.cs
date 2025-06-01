@@ -85,7 +85,7 @@ namespace Game
         public void StartGame(int? saveSlot = null)
         {
             Purrine purrine = new Purrine(0, 0, 0, 0, 0, 0, 0, 0, Mood.NEUTRAL);
-            Player player = new Player("Player", new List<Item>(), GPU.MEOWTX_1000);
+            Player player   = new Player("Player", new List<Item>(), GPU.MEOWTX_1000);
             SexInfo sexInfo = new SexInfo(0, 0, 0, 0, 0, true);
 
             GameInfo gameInfo = new GameInfo(0, 0, purrine, player, sexInfo);
