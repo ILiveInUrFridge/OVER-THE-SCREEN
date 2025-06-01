@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.U2D.PSD;
-using Utilities;
 
 public class SpriteImportSettings : AssetPostprocessor, ILoggable
 {
@@ -37,13 +36,14 @@ public class SpriteImportSettings : AssetPostprocessor, ILoggable
         //     return;
         // }
 
-        TextureImporter textureImporter = (TextureImporter)assetImporter;
+        TextureImporter textureImporter = (TextureImporter) assetImporter;
 
         // Single sprite import mode (no sprite sheet, because who the fuck?)
         textureImporter.spriteImportMode = SpriteImportMode.Single;
 
-        // Max texture size (4K Native)
-        textureImporter.maxTextureSize = 4096;
+        // Max texture size (8K Native)
+        textureImporter.maxTextureSize = 8192;
+        textureImporter.textureCompression = TextureImporterCompression.CompressedHQ;
 
         // Log the change for debugging purposes
         this.Log($"Applied settings to: {assetPath}");

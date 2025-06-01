@@ -1,9 +1,8 @@
 using UnityEngine;
-using System.Collections;
-using TMPro;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
-using Utilities;
+using System.Collections;
+using TMPro;
 
 /// <summary>
 ///     Rotates an arrow image when a dropdown is opened or closed.

@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using Game.Characters;
 using Game.Items;
 using Game.Common;
-using Utilities;
 
 namespace Game.Core
 {

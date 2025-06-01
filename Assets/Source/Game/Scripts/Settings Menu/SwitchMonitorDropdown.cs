@@ -1,9 +1,8 @@
 using UnityEngine;
-using TMPro;
-using System.Collections.Generic;
 using System;
 using System.Collections;
-using Utilities;
+using System.Collections.Generic;
+using TMPro;
 
 /// <summary>
 ///     This is a dropdown that allows the player to switch between monitors.   

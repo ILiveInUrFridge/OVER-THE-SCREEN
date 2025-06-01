@@ -1,16 +1,23 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Settings;
+using UnityEngine.Localization.Tables;
 using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
+
 using Game.Audio;
 
 /// <summary>
 ///     Script responsible for animating and the general presentation of transition
 ///     from the main menu to a new game instance.
+///     
+///     I honestly don't fucking know what's going on anymore, and I don't know which code works and what doesn't...
+///     So like fuck it bruh
 /// </summary>
 public class NewGameAnimator : MonoBehaviour
 {
@@ -30,7 +37,6 @@ public class NewGameAnimator : MonoBehaviour
     private float cursorBlinkSpeed = 0.5f;
     private float scanlineSpeed = 0.1f;
     private float glitchChance = 0.1f;
-    private string pressAnyKeyMessage = "PRESS ENTER TO CONNECT";
     private int maxConsoleLines = 30; // Maximum number of lines to keep in the console
 
     [Header("Colors")]
@@ -68,6 +74,15 @@ public class NewGameAnimator : MonoBehaviour
     private int pressKeyTextStartIndex = 0;
     private bool isTyping = false;  // Track when text is being typed
     private Material shaderMaterial;  // Reference to the shader material
+
+    // Change from string to LocalizedString
+    [Header("Localization Keys")]
+    private readonly string pressEnterToProceedKey = "new_game.press_enter_key";
+    private readonly string purrineHelloKey = "new_game.purrine_1";
+    private readonly string purrineImHereKey = "new_game.purrine_2";
+    
+    // Change the variable from a direct string to a property that gets the localized value
+    private string pressEnterToProceedMessage => GetLocalizedString(pressEnterToProceedKey);
 
     private void Start()
     {
@@ -195,14 +210,14 @@ public class NewGameAnimator : MonoBehaviour
         }
 
         // Remove any existing press key message to avoid duplication
-        int pressKeyIndex = baseText.LastIndexOf(pressAnyKeyMessage);
+        int pressKeyIndex = baseText.LastIndexOf(pressEnterToProceedMessage);
         if (pressKeyIndex >= 0)
         {
             baseText = baseText.Substring(0, pressKeyIndex);
         }
 
         // Add the press key message with a highlight
-        baseText += $"<color=#{ColorUtility.ToHtmlStringRGB(pressKeyColor)}>{pressAnyKeyMessage}</color>";
+        baseText += $"<color=#{ColorUtility.ToHtmlStringRGB(pressKeyColor)}>{pressEnterToProceedMessage}</color>";
 
         // Add blinking cursor
         if (isCursorVisible)
@@ -216,7 +231,7 @@ public class NewGameAnimator : MonoBehaviour
 
     public void PlayTransition()
     {
-        AudioManager.Music.FadeOutMusic(fadeDuration + 3);
+        AudioManager.Music.FadeOutMusic(fadeDuration + 3.5f);
         AudioManager.SFX.Play("start_new_game", 0.2f);
 
         // Activate transition screen and start fade to black
@@ -1162,7 +1177,7 @@ public class NewGameAnimator : MonoBehaviour
 
             for (int i = lines.Length - 1; i >= 0; i--)
             {
-                if (lines[i].Contains(pressAnyKeyMessage))
+                if (lines[i].Contains(pressEnterToProceedMessage))
                 {
                     hasPressKeyMessage = true;
                     pressKeyLine = i;
@@ -1245,7 +1260,7 @@ public class NewGameAnimator : MonoBehaviour
 
             // Stage 1: Subtle instability (small flicker) - keep text visible
             PlayRandomGlitchSound(0.3f);
-            AudioManager.SFX.Play("pink_noise_2", 0.1f);
+            AudioManager.SFX.Play("pink_noise_2", 0.5f);
 
             // First subtle shader adjustment
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 1.3f); // Reduced from 1.5f for smoother progression
@@ -1337,7 +1352,7 @@ public class NewGameAnimator : MonoBehaviour
         // Initial glitch sound
         PlayRandomGlitchSound(0.6f);
 
-        AudioManager.SFX.Play("pink_noise_2", 0.3f);
+        AudioManager.SFX.Play("pink_noise_2", 0.8f);
 
         // Let the sound play for a moment before effects start
         yield return new WaitForSeconds(0.15f); // Increased from 0.1f
@@ -1412,28 +1427,6 @@ public class NewGameAnimator : MonoBehaviour
 
         yield return new WaitForSeconds(0.2f); // Extended from 0.15f
 
-        // Screen tear effect - optional but looks cool
-        if (consoleText != null && transitionImage != null)
-        {
-            // Create a quick "screen tear" effect
-            GameObject tearObj = new GameObject("ScreenTear");
-            tearObj.transform.SetParent(transitionImage.transform, false);
-            Image tearImage = tearObj.AddComponent<Image>();
-            tearImage.color = new Color(1f, 1f, 1f, 0.8f);
-
-            RectTransform tearRect = tearImage.GetComponent<RectTransform>();
-            tearRect.anchorMin = new Vector2(0, 0.4f);
-            tearRect.anchorMax = new Vector2(1, 0.6f);
-            tearRect.sizeDelta = new Vector2(0, 20f);
-
-            // Quick flash of the tear
-            yield return new WaitForSeconds(0.05f);
-            PlayRandomGlitchSound(1.0f);
-
-            // Destroy the tear
-            Destroy(tearObj);
-        }
-
         // Stop the glitch lines coroutine before going to black screen
         if (glitchLinesCoroutine != null)
         {
@@ -1470,6 +1463,24 @@ public class NewGameAnimator : MonoBehaviour
         // SUDDEN BLACK SCREEN - simulating monitor abruptly losing power
         if (transitionImage != null)
         {
+            // Create a quick "screen tear" effect
+            GameObject tearObj = new GameObject("ScreenTear");
+            tearObj.transform.SetParent(transitionImage.transform, false);
+            Image tearImage = tearObj.AddComponent<Image>();
+            tearImage.color = new Color(1f, 1f, 1f, 0.8f);
+
+            RectTransform tearRect = tearImage.GetComponent<RectTransform>();
+            tearRect.anchorMin = new Vector2(0, 0.4f);
+            tearRect.anchorMax = new Vector2(1, 0.6f);
+            tearRect.sizeDelta = new Vector2(0, 20f);
+
+            // Quick flash of the tear
+            yield return new WaitForSeconds(0.05f);
+            PlayRandomGlitchSound(1.0f);
+
+            // Destroy the tear
+            Destroy(tearObj);
+
             // Hard cut to black
             transitionImage.color = Color.black;
 
@@ -1604,7 +1615,7 @@ public class NewGameAnimator : MonoBehaviour
             }
 
             // Remove the "PRESS ENTER TO CONNECT" message
-            int pressKeyIndex = currentText.LastIndexOf(pressAnyKeyMessage);
+            int pressKeyIndex = currentText.LastIndexOf(pressEnterToProceedMessage);
             if (pressKeyIndex >= 0)
             {
                 currentText = currentText.Substring(0, pressKeyIndex);
@@ -1617,7 +1628,7 @@ public class NewGameAnimator : MonoBehaviour
             consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color>" + proceedingMessage;
 
             // Show cursor blinking at the end of the message
-            StartCoroutine(BlinkCursorAfterProceeding(currentText, proceedingMessage));
+            // StartCoroutine(BlinkCursorAfterProceeding(currentText, proceedingMessage));
 
             // Wait a moment before starting the shutdown sequence
             yield return new WaitForSeconds(1.5f);
@@ -2139,7 +2150,7 @@ public class NewGameAnimator : MonoBehaviour
             }
 
             // Remove the connection prompt message
-            int pressKeyIndex = currentText.LastIndexOf(pressAnyKeyMessage);
+            int pressKeyIndex = currentText.LastIndexOf(pressEnterToProceedMessage);
             if (pressKeyIndex >= 0)
             {
                 currentText = currentText.Substring(0, pressKeyIndex);
@@ -2150,9 +2161,6 @@ public class NewGameAnimator : MonoBehaviour
             string connectingMessage = $"<color=#{ColorUtility.ToHtmlStringRGB(connectingColor)}>Connecting...</color>";
             string caretColorHex = ColorUtility.ToHtmlStringRGB(readyColor);
             consoleText.text = currentText + $"\n<color=#{caretColorHex}>> </color>" + connectingMessage;
-
-            // Show connecting message with blinking cursor
-            StartCoroutine(BlinkCursorDuringConnecting(currentText, connectingMessage));
 
             // Brief pause while "Connecting..."
             yield return new WaitForSeconds(1.0f);
@@ -2360,13 +2368,18 @@ public class NewGameAnimator : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         // Then a hint of consciousness appearing
-        DisplayTerminalCommand("echo \"Hello?\"", readyColor);
+        DisplayTerminalCommand("echo \"" + GetLocalizedString(purrineHelloKey) + "\"", initColor);
         AudioManager.SFX.Play("bong_1", 0.2f);
         yield return new WaitForSeconds(0.7f);
 
         // System response
-        DisplaySystemMessage("Hello?", systemInfoColor);
+        DisplaySystemMessage(GetLocalizedString(purrineHelloKey), systemInfoColor);
         yield return new WaitForSeconds(1.0f);
+
+        // Add blank line for spacing before important status command
+        string currentTextSpacing3 = consoleText.text;
+        consoleText.text = currentTextSpacing3 + "\n";
+        yield return new WaitForSeconds(0.5f);
 
         // Another command, showing growing awareness
         DisplayTerminalCommand("identify_user", initColor);
@@ -2378,8 +2391,8 @@ public class NewGameAnimator : MonoBehaviour
         yield return new WaitForSeconds(0.9f);
 
         // Add blank line for spacing before important status command
-        string currentTextSpacing3 = consoleText.text;
-        consoleText.text = currentTextSpacing3 + "\n";
+        string currentTextSpacing4 = consoleText.text;
+        consoleText.text = currentTextSpacing4 + "\n";
         yield return new WaitForSeconds(0.5f);
 
         // Subtle hint of growing consciousness
@@ -2409,12 +2422,12 @@ public class NewGameAnimator : MonoBehaviour
 
         // Add more spacing after status readout
         yield return new WaitForSeconds(1.0f);
-        string currentTextSpacing4 = consoleText.text;
-        consoleText.text = currentTextSpacing4 + "\n";
+        string currentTextSpacing5 = consoleText.text;
+        consoleText.text = currentTextSpacing5 + "\n";
         yield return new WaitForSeconds(0.6f);
 
         // Final message showing Purrine becoming active, more subtle than before
-        DisplayTerminalCommand("log \"I'm here.\"", initColor);
+        DisplayTerminalCommand("log \"" + GetLocalizedString(purrineImHereKey) + "\"", initColor);
 
         // Small glitch effect
         TriggerGlitchEffect(0.2f, 0.2f);
@@ -2428,8 +2441,8 @@ public class NewGameAnimator : MonoBehaviour
         yield return new WaitForSeconds(1.0f);
 
         // Add final spacing
-        string currentTextSpacing5 = consoleText.text;
-        consoleText.text = currentTextSpacing5 + "\n";
+        string currentTextSpacing6 = consoleText.text;
+        consoleText.text = currentTextSpacing6 + "\n";
         yield return new WaitForSeconds(0.5f);
 
         // Final system shutdown initiating
@@ -2645,5 +2658,11 @@ public class NewGameAnimator : MonoBehaviour
         consoleText.text += "\n";
 
         yield break;
+    }
+
+    // Add this helper method to get localized strings
+    private string GetLocalizedString(string key)
+    {
+        return LocalizationSettings.StringDatabase.GetLocalizedString("NewGameAnimatorStringCollection", key);
     }
 }
