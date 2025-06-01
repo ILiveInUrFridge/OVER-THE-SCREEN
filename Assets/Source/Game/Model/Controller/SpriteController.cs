@@ -182,6 +182,26 @@ namespace Game.Model.Controller
             this.Log("Applied all test emotions");
         }
         
+        [ContextMenu("Close Eyes")]
+        public void CloseEyes()
+        {
+            if (eyeController != null)
+            {
+                eyeController.CloseEyes();
+                this.Log("Closed eyes manually");
+            }
+        }
+        
+        [ContextMenu("Open Eyes")]
+        public void OpenEyes()
+        {
+            if (eyeController != null)
+            {
+                eyeController.OpenEyes();
+                this.Log("Opened eyes manually");
+            }
+        }
+        
         #endregion
         
         /// <summary>

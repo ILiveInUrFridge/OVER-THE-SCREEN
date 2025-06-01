@@ -29,6 +29,7 @@ namespace Game.Model.Controller
         private Coroutine blinkTimerCoroutine;
         private Dictionary<EyeEmotion, List<Sprite>> emotionSprites = new Dictionary<EyeEmotion, List<Sprite>>();
         private bool isBlinking = false;
+        private bool isManuallyClosed = false;
         
         // Frame timing constants (converted from 30FPS to seconds)
         private const float FRAME_TIME = 1f / 30f;
@@ -153,12 +154,12 @@ namespace Game.Model.Controller
         /// </summary>
         private IEnumerator BlinkTimerCoroutine()
         {
-            while (enableBlinking)
+            while (enableBlinking && !isManuallyClosed)
             {
                 float randomInterval = Random.Range(blinkIntervalRange.x, blinkIntervalRange.y);
                 yield return new WaitForSeconds(randomInterval);
                 
-                if (!isBlinking)
+                if (!isBlinking && !isManuallyClosed)
                 {
                     bool isDoubleBlink = Random.Range(0f, 1f) < doubleBinkChance;
                     StartBlink(isDoubleBlink);
@@ -171,7 +172,7 @@ namespace Game.Model.Controller
         /// </summary>
         public void StartBlink(bool isDoubleBlink = false)
         {
-            if (isBlinking) return;
+            if (isBlinking || isManuallyClosed) return;
             
             // Don't blink if emotion has only one sprite (like SMILE)
             if (emotionSprites.ContainsKey(currentEmotion) && emotionSprites[currentEmotion].Count <= 1)
@@ -290,6 +291,69 @@ namespace Game.Model.Controller
         public bool IsBlinking()
         {
             return isBlinking;
+        }
+        
+        /// <summary>
+        ///     Manually close the eyes and stop automatic blinking
+        /// </summary>
+        public void CloseEyes()
+        {
+            if (isManuallyClosed) return;
+            
+            isManuallyClosed = true;
+            
+            // Stop any current blinking animation
+            if (blinkCoroutine != null)
+            {
+                StopCoroutine(blinkCoroutine);
+                blinkCoroutine = null;
+            }
+            
+            // Stop automatic blinking
+            if (blinkTimerCoroutine != null)
+            {
+                StopCoroutine(blinkTimerCoroutine);
+                blinkTimerCoroutine = null;
+            }
+            
+            isBlinking = false;
+            
+            // Set to closed eye sprite (frame 0)
+            if (emotionSprites.ContainsKey(currentEmotion) && emotionSprites[currentEmotion].Count > 0)
+            {
+                eyeRenderer.sprite = emotionSprites[currentEmotion][0]; // Frame 0 = closed
+            }
+            
+            this.Log("Eyes manually closed, blinking stopped");
+        }
+        
+        /// <summary>
+        ///     Manually open the eyes and resume automatic blinking
+        /// </summary>
+        public void OpenEyes()
+        {
+            if (!isManuallyClosed) return;
+            
+            isManuallyClosed = false;
+            
+            // Restore to current emotion's open eye sprite
+            SetEmotion(currentEmotion);
+            
+            // Resume automatic blinking if enabled
+            if (enableBlinking)
+            {
+                StartBlinkTimer();
+            }
+            
+            this.Log("Eyes manually opened, blinking resumed");
+        }
+        
+        /// <summary>
+        ///     Check if eyes are manually closed
+        /// </summary>
+        public bool IsManuallyClosed()
+        {
+            return isManuallyClosed;
         }
         
         private void OnDestroy()
