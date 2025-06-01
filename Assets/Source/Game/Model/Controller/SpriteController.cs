@@ -20,13 +20,19 @@ namespace Game.Model.Controller
         [SerializeField] private EyebrowController eyebrowController;
         [SerializeField] private MouthController mouthController;
         [SerializeField] private BlushController blushController;
-        
+        [SerializeField] private ClothingController clothingController;
+
         [Header("Inspector Test Controls")]
         [SerializeField] private EyeEmotion testEyeEmotion = EyeEmotion.DEFAULT;
         [SerializeField] private EyebrowEmotion testEyebrowEmotion = EyebrowEmotion.NEUTRAL;
         [SerializeField] private MouthEmotion testMouthEmotion = MouthEmotion.NEUTRAL;
         [SerializeField] private BlushStrength testBlushStrength = BlushStrength.NONE;
         [SerializeField] private float testTalkDuration = 2f;
+        
+        [Header("Simple Clothing Test")]
+        [SerializeField] private ClothingType simpleTestType = ClothingType.TOP_A;
+        [SerializeField] private string simpleTestSpriteName = "basic_shirt";
+        [SerializeField] private bool hideUndergarments = false;
 
         /// <summary>
         ///     Gets the current sprite type
@@ -49,10 +55,11 @@ namespace Game.Model.Controller
                     return "Sprite A";
             }
         }
-        
+
         private void Start()
         {
-            if (baseBodyRenderer == null) {
+            if (baseBodyRenderer == null)
+            {
                 this.LogWarning($"Base body renderer is not assigned for {gameObject.name}");
             }
 
@@ -63,20 +70,25 @@ namespace Game.Model.Controller
             {
                 eyeController.Initialize(this);
             }
-            
+
             if (eyebrowController != null)
             {
                 eyebrowController.Initialize(this);
             }
-            
+
             if (mouthController != null)
             {
                 mouthController.Initialize(this);
             }
-            
+
             if (blushController != null)
             {
                 blushController.Initialize(this);
+            }
+            
+            if (clothingController != null)
+            {
+                clothingController.Initialize(this);
             }
         }
         
@@ -202,6 +214,65 @@ namespace Game.Model.Controller
             }
         }
         
+        [ContextMenu("Set Simple Test Clothing")]
+        public void SetSimpleTestClothing()
+        {
+            if (clothingController != null)
+            {
+                if (simpleTestType == ClothingType.TOP_A || simpleTestType == ClothingType.TOP_B)
+                {
+                    clothingController.SetTop(simpleTestSpriteName, hideUndergarments);
+                    this.Log($"Set top clothing: {simpleTestSpriteName} (Hide Bra: {hideUndergarments})");
+                }
+                else if (simpleTestType == ClothingType.BOTTOM)
+                {
+                    clothingController.SetBottom(simpleTestSpriteName, hideUndergarments);
+                    this.Log($"Set bottom clothing: {simpleTestSpriteName} (Hide Panties: {hideUndergarments})");
+                }
+                else
+                {
+                    clothingController.SetClothingByName(simpleTestType, simpleTestSpriteName);
+                    this.Log($"Set clothing: {simpleTestType} = {simpleTestSpriteName}");
+                }
+            }
+        }
+        
+        [ContextMenu("Remove Simple Test Clothing")]
+        public void RemoveSimpleTestClothing()
+        {
+            if (clothingController != null)
+            {
+                clothingController.RemoveClothingByLayer(simpleTestType);
+                this.Log($"Removed clothing from: {simpleTestType}");
+            }
+        }
+        
+        [ContextMenu("Strip All Clothing")]
+        public void StripAllClothing()
+        {
+            if (clothingController != null)
+            {
+                clothingController.Strip();
+                this.Log("Stripped all clothing");
+            }
+        }
+        
+        [ContextMenu("List Available Sprites")]
+        public void ListAvailableSprites()
+        {
+            if (clothingController != null)
+            {
+                foreach (ClothingType type in System.Enum.GetValues(typeof(ClothingType)))
+                {
+                    var sprites = clothingController.GetAvailableSprites(type);
+                    if (sprites.Count > 0)
+                    {
+                        this.Log($"{type}: {string.Join(", ", sprites)}");
+                    }
+                }
+            }
+        }
+        
         #endregion
         
         /// <summary>
@@ -234,6 +305,14 @@ namespace Game.Model.Controller
         public BlushController GetBlushController()
         {
             return blushController;
+        }
+        
+        /// <summary>
+        /// Get reference to the clothing controller
+        /// </summary>
+        public ClothingController GetClothingController()
+        {
+            return clothingController;
         }
     }
 }
