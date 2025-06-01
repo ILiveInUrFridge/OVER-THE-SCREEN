@@ -2,8 +2,6 @@ namespace Game.Model.Controller.Data
 {
     /// <summary>
     ///     Enum for clothing layers / types that can be worn by a Purrine sprite.
-    ///     
-    ///     They are in an order of priority (z order).
     /// </summary>
     public enum ClothingType
     {
@@ -17,5 +15,6 @@ namespace Game.Model.Controller.Data
         ACCESSORY_NECK,
         ACCESSORY_BREASTS,
         ACCESSORY_CROTCH,
+        EXTRA,
     }
 }
