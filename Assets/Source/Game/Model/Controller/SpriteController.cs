@@ -10,7 +10,7 @@ namespace Game.Model.Controller
     public class SpriteController : MonoBehaviour, ILoggable
     {
         [Header("Sprite Configuration")]
-        [SerializeField] private SpriteType spriteType = SpriteType.SPRITE_A;
+        [SerializeField] private SpriteType spriteType = SpriteType.A;
 
         public SpriteRenderer baseBodyRenderer;
         public Sprite baseBodySprite;
@@ -22,17 +22,29 @@ namespace Game.Model.Controller
         [SerializeField] private BlushController blushController;
         [SerializeField] private ClothingController clothingController;
 
-        [Header("Inspector Test Controls")]
-        [SerializeField] private EyeEmotion testEyeEmotion = EyeEmotion.DEFAULT;
-        [SerializeField] private EyebrowEmotion testEyebrowEmotion = EyebrowEmotion.NEUTRAL;
-        [SerializeField] private MouthEmotion testMouthEmotion = MouthEmotion.NEUTRAL;
-        [SerializeField] private BlushStrength testBlushStrength = BlushStrength.NONE;
-        [SerializeField] private float testTalkDuration = 2f;
-        
-        [Header("Simple Clothing Test")]
-        [SerializeField] private ClothingType simpleTestType = ClothingType.TOP_A;
-        [SerializeField] private string simpleTestSpriteName = "basic_shirt";
-        [SerializeField] private bool hideUndergarments = false;
+        [Header("Emotions")]
+        [SerializeField] private EyeEmotion eyeEmotion = EyeEmotion.DEFAULT;
+        [SerializeField] private EyebrowEmotion eyebrowEmotion = EyebrowEmotion.NEUTRAL;
+        [SerializeField] private MouthEmotion mouthEmotion = MouthEmotion.NEUTRAL;
+        [SerializeField] private BlushStrength blushStrength = BlushStrength.NONE;
+
+        [Header("Clothing Selection")]
+        [SerializeField] private string topA;
+        [SerializeField] private string topB;
+        [SerializeField] private string bottom;
+        [SerializeField] private string bra;
+        [SerializeField] private string panties;
+        [SerializeField] private string accessoryHair;
+        [SerializeField] private string accessoryHead;
+        [SerializeField] private string accessoryNeck;
+        [SerializeField] private string accessoryBreasts;
+        [SerializeField] private string accessoryCrotch;
+        [SerializeField] private string extra;
+        [SerializeField] private bool hideBra = false;
+        [SerializeField] private bool hidePanties = false;
+
+        [Header("Mouth Talking")]
+        [SerializeField] private float talkDurationSeconds = 2f;
 
         /// <summary>
         ///     Gets the current sprite type
@@ -49,10 +61,12 @@ namespace Game.Model.Controller
         {
             switch (spriteType)
             {
-                case SpriteType.SPRITE_A:
-                    return "Sprite A";
+                case SpriteType.A:
+                    return "A";
+                case SpriteType.B:
+                    return "B";
                 default:
-                    return "Sprite A";
+                    return "A";
             }
         }
 
@@ -92,161 +106,150 @@ namespace Game.Model.Controller
             }
         }
         
-        #region Inspector Test Functions
-        
-        [ContextMenu("Apply Test Eye Emotion")]
-        public void ApplyTestEyeEmotion()
+        #region Inspector Controls
+
+        [ContextMenu("Apply All Changes")]
+        public void ApplyAllChanges()
+        {
+            ApplyEmotions();
+            ApplyClothing();
+            this.Log("Applied emotions and clothing selections");
+        }
+
+        private void ApplyEmotions()
         {
             if (eyeController != null)
             {
-                eyeController.SetEmotion(testEyeEmotion);
-                this.Log($"Set eye emotion to: {testEyeEmotion}");
+                eyeController.SetEmotion(eyeEmotion);
             }
-        }
-        
-        [ContextMenu("Apply Test Eyebrow Emotion")]
-        public void ApplyTestEyebrowEmotion()
-        {
+
             if (eyebrowController != null)
             {
-                eyebrowController.SetEmotion(testEyebrowEmotion);
-                this.Log($"Set eyebrow emotion to: {testEyebrowEmotion}");
+                eyebrowController.SetEmotion(eyebrowEmotion);
             }
-        }
-        
-        [ContextMenu("Apply Test Mouth Emotion")]
-        public void ApplyTestMouthEmotion()
-        {
+
             if (mouthController != null)
             {
-                mouthController.SetEmotion(testMouthEmotion);
-                this.Log($"Set mouth emotion to: {testMouthEmotion}");
+                mouthController.SetEmotion(mouthEmotion);
             }
-        }
-        
-        [ContextMenu("Apply Test Blush Strength")]
-        public void ApplyTestBlushStrength()
-        {
+
             if (blushController != null)
             {
-                blushController.SetStrength(testBlushStrength);
-                this.Log($"Set blush strength to: {testBlushStrength}");
+                blushController.SetStrength(blushStrength);
             }
         }
-        
+
+        private void ApplyClothing()
+        {
+            if (clothingController == null)
+            {
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(topA))
+            {
+                clothingController.SetTopA(topA, hideBra);
+            }
+
+            if (!string.IsNullOrEmpty(topB))
+            {
+                clothingController.SetTopB(topB);
+            }
+
+            if (!string.IsNullOrEmpty(bottom))
+            {
+                clothingController.SetBottom(bottom, hidePanties);
+            }
+
+            if (!string.IsNullOrEmpty(bra))
+            {
+                clothingController.SetBra(bra);
+            }
+
+            if (!string.IsNullOrEmpty(panties))
+            {
+                clothingController.SetPanties(panties);
+            }
+
+            if (!string.IsNullOrEmpty(accessoryHair))
+            {
+                clothingController.SetAccessoryHair(accessoryHair);
+            }
+
+            if (!string.IsNullOrEmpty(accessoryHead))
+            {
+                clothingController.SetAccessoryHead(accessoryHead);
+            }
+
+            if (!string.IsNullOrEmpty(accessoryNeck))
+            {
+                clothingController.SetAccessoryNeck(accessoryNeck);
+            }
+
+            if (!string.IsNullOrEmpty(accessoryBreasts))
+            {
+                clothingController.SetAccessoryBreasts(accessoryBreasts);
+            }
+
+            if (!string.IsNullOrEmpty(accessoryCrotch))
+            {
+                clothingController.SetAccessoryCrotch(accessoryCrotch);
+            }
+
+            if (!string.IsNullOrEmpty(extra))
+            {
+                clothingController.SetExtra(extra);
+            }
+        }
+
         [ContextMenu("Start Talking")]
         public void StartTalking()
         {
             if (mouthController != null)
             {
                 mouthController.StartTalking();
-                this.Log("Started talking animation");
+                this.Log("Started talking");
             }
         }
-        
+
         [ContextMenu("Stop Talking")]
         public void StopTalking()
         {
             if (mouthController != null)
             {
                 mouthController.StopTalking();
-                this.Log("Stopped talking animation");
+                this.Log("Stopped talking");
             }
         }
-        
-        [ContextMenu("Talk For Test Duration")]
-        public void TalkForTestDuration()
+
+        [ContextMenu("Talk For Set Duration")]
+        public void TalkForSetDuration()
         {
             if (mouthController != null)
             {
-                mouthController.Talk(testTalkDuration);
-                this.Log($"Started talking for {testTalkDuration} seconds");
+                mouthController.Talk(talkDurationSeconds);
+                this.Log($"Talking for {talkDurationSeconds} seconds");
             }
         }
-        
-        [ContextMenu("Trigger Test Blink")]
-        public void TriggerTestBlink()
-        {
-            if (eyeController != null)
-            {
-                eyeController.StartBlink(false);
-                this.Log("Triggered single blink");
-            }
-        }
-        
-        [ContextMenu("Trigger Test Double Blink")]
-        public void TriggerTestDoubleBlink()
-        {
-            if (eyeController != null)
-            {
-                eyeController.StartBlink(true);
-                this.Log("Triggered double blink");
-            }
-        }
-        
-        [ContextMenu("Apply All Test Emotions")]
-        public void ApplyAllTestEmotions()
-        {
-            ApplyTestEyeEmotion();
-            ApplyTestEyebrowEmotion();
-            ApplyTestMouthEmotion();
-            ApplyTestBlushStrength();
-            this.Log("Applied all test emotions");
-        }
-        
+
         [ContextMenu("Close Eyes")]
         public void CloseEyes()
         {
             if (eyeController != null)
             {
                 eyeController.CloseEyes();
-                this.Log("Closed eyes manually");
             }
         }
-        
+
         [ContextMenu("Open Eyes")]
         public void OpenEyes()
         {
             if (eyeController != null)
             {
                 eyeController.OpenEyes();
-                this.Log("Opened eyes manually");
             }
         }
-        
-        [ContextMenu("Set Simple Test Clothing")]
-        public void SetSimpleTestClothing()
-        {
-            if (clothingController != null)
-            {
-                if (simpleTestType == ClothingType.TOP_A || simpleTestType == ClothingType.TOP_B)
-                {
-                    clothingController.SetTop(simpleTestSpriteName, hideUndergarments);
-                    this.Log($"Set top clothing: {simpleTestSpriteName} (Hide Bra: {hideUndergarments})");
-                }
-                else if (simpleTestType == ClothingType.BOTTOM)
-                {
-                    clothingController.SetBottom(simpleTestSpriteName, hideUndergarments);
-                    this.Log($"Set bottom clothing: {simpleTestSpriteName} (Hide Panties: {hideUndergarments})");
-                }
-                else
-                {
-                    clothingController.SetClothingByName(simpleTestType, simpleTestSpriteName);
-                    this.Log($"Set clothing: {simpleTestType} = {simpleTestSpriteName}");
-                }
-            }
-        }
-        
-        [ContextMenu("Remove Simple Test Clothing")]
-        public void RemoveSimpleTestClothing()
-        {
-            if (clothingController != null)
-            {
-                clothingController.RemoveClothingByLayer(simpleTestType);
-                this.Log($"Removed clothing from: {simpleTestType}");
-            }
-        }
-        
+
         [ContextMenu("Strip All Clothing")]
         public void StripAllClothing()
         {
@@ -256,23 +259,7 @@ namespace Game.Model.Controller
                 this.Log("Stripped all clothing");
             }
         }
-        
-        [ContextMenu("List Available Sprites")]
-        public void ListAvailableSprites()
-        {
-            if (clothingController != null)
-            {
-                foreach (ClothingType type in System.Enum.GetValues(typeof(ClothingType)))
-                {
-                    var sprites = clothingController.GetAvailableSprites(type);
-                    if (sprites.Count > 0)
-                    {
-                        this.Log($"{type}: {string.Join(", ", sprites)}");
-                    }
-                }
-            }
-        }
-        
+
         #endregion
         
         /// <summary>

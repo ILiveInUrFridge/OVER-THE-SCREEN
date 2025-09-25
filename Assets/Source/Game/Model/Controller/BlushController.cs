@@ -16,7 +16,7 @@ namespace Game.Model.Controller
         [SerializeField] private BlushStrength currentStrength = BlushStrength.NONE;
 
         private SpriteController spriteController;
-        private Dictionary<BlushStrength, Sprite> strengthSprites = new Dictionary<BlushStrength, Sprite>();
+        private readonly Dictionary<BlushStrength, Sprite> strengthSprites = new();
 
         /// <summary>
         ///     Initialize the blush controller with sprite controller reference

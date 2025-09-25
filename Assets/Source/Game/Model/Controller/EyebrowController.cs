@@ -16,7 +16,7 @@ namespace Game.Model.Controller
         [SerializeField] private EyebrowEmotion currentEmotion = EyebrowEmotion.NEUTRAL;
 
         private SpriteController spriteController;
-        private Dictionary<EyebrowEmotion, Sprite> emotionSprites = new Dictionary<EyebrowEmotion, Sprite>();
+        private readonly Dictionary<EyebrowEmotion, Sprite> emotionSprites = new();
 
         /// <summary>
         ///     Initialize the eyebrow controller with sprite controller reference

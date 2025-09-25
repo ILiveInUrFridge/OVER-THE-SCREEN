@@ -80,7 +80,7 @@ public class ButtonBounceOnHoverEffect : MonoBehaviour, IPointerEnterHandler, IP
 
         if (AudioManager.SFX != null && playSoundOnHover)
         {
-            AudioManager.SFX.Play("hover_4", volume: 0.6f);
+            AudioManager.SFX.Play("hover_4");
         }
 
         // Phase 2: scale down from overshoot → final (still bigger than original)
