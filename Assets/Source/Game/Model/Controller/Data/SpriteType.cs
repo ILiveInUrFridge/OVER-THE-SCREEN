@@ -5,6 +5,7 @@ namespace Game.Model.Controller.Data
     /// </summary>
     public enum SpriteType
     {
-        SPRITE_A
+        A,
+        B
     }
 } 

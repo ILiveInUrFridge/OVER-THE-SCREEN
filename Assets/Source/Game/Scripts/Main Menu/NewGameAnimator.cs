@@ -314,7 +314,7 @@ public class NewGameAnimator : MonoBehaviour
             scanlineOverlay.color = startColor;
 
             // Define the final subtle alpha - make it extremely subtle
-            float targetAlpha = 4f / 255f; // Even more subtle than before
+            float targetAlpha = 4f / 255f;
 
             // Store the default shader values in case we can't get them from the material
             float originalIntensity = 0.5f;
@@ -378,7 +378,7 @@ public class NewGameAnimator : MonoBehaviour
             elapsedTime = 0f;
 
             // Use much more subtle values for the scanline effect
-            float initialOverlayAlpha = 0.15f; // Reduced from 0.4f for less brightness
+            float initialOverlayAlpha = 0.15f;
             float initialGlitch = baseGlitchIntensity * 3f;
 
             // Set the initial effect - make it subtle
@@ -593,59 +593,21 @@ public class NewGameAnimator : MonoBehaviour
         // Keep the original messages but with faster typing speed
         var bootMessages = new (string message, Color color, float duration, bool hasLoadingBar, bool isError, bool instantLoad)[]
         {
-            ($"[BOOT] Purrine_AI-B1-08364142020", bootColor, 3f, false, false, false),
+            ($"[BOOT] 00000023vGL060220250240.safetensors", bootColor, 3f, false, false, false),
             ("[INIT] Loading neural networks...", initColor, 1.2f, true, false, false),
-            ("[MEM] Allocating memory buffers...", initColor, 0.6f, true, false, true),
             ("[INIT] Calibrating sensors...", initColor, 0.8f, true, false, false),
-            ("[DIAG] Running sensor diagnostics...", statusColor, 0.7f, true, false, true),
             ("[INIT] Initializing personality matrix...", initColor, 1.5f, true, false, false),
             ("[NET] Establishing connection to primary network...", initColor, 0.8f, true, false, true),
-            ("[INIT] Establishing quantum link...", initColor, 1.0f, true, false, false),
-            ("[ERROR] Quantum link unstable...", errorColor, 0.3f, false, true, false),
-            ("[DIAG] Signal strength: 32%", errorColor, 0.2f, false, false, true),
-            ("[DIAG] Packet loss: 78%", errorColor, 0.2f, false, false, true),
-            ("[LOG] Attempting signal amplification", statusColor, 0.2f, false, false, true),
-            ("[INIT] Re-establishing quantum link...", initColor, 0.7f, true, false, false),
-            ("[ERROR] Failed to establish quantum link. Proceeding OFFLINE...", errorColor, 0.2f, false, true, false),
-            ("[LOG] Activating fallback protocol: OFFLINE_MODE", statusColor, 0.4f, false, false, true),
+            ("[ERROR] Primary network offline...", errorColor, 0.3f, false, true, false),
             ("[NET] Scanning for available networks...", statusColor, 0.9f, true, false, false),
-            ("[DIAG] Network scan in progress...", systemInfoColor, 0.3f, false, false, true),
-            ("[NET] Scan range: 500m", systemInfoColor, 0.2f, false, false, true),
-            ("[NET] Frequency range: 1GHz - 10THz", systemInfoColor, 0.3f, false, false, true),
-            ("[NET] Signal analysis protocol active", systemInfoColor, 0.2f, false, false, true),
-            ("[DIAG] Scanning frequency band 1...", systemInfoColor, 0.6f, true, false, false),
-            ("[NET] No networks found in frequency band 1", systemInfoColor, 0.2f, false, false, true),
-            ("[DIAG] Scanning frequency band 2...", systemInfoColor, 0.5f, true, false, false),
-            ("[NET] No networks found in frequency band 2", systemInfoColor, 0.2f, false, false, true),
-            ("[LOG] Expanding search parameters...", statusColor, 0.3f, false, false, true),
-            ("[DIAG] Scanning frequency band 3...", systemInfoColor, 0.7f, true, false, false),
-            ("[ALERT] Faint signal detected", errorColor, 0.2f, false, false, true),
-            ("[NET] Signal strength: 12% - insufficient", systemInfoColor, 0.2f, false, false, true),
-            ("[NET] Attempting signal amplification", statusColor, 0.4f, true, false, false),
-            ("[NET] Signal loss - connection attempt failed", errorColor, 0.2f, false, false, true),
-            ("[NET] Continuing network scan...", systemInfoColor, 0.2f, false, false, true),
-            ("[DIAG] Adjusting antenna sensitivity", systemInfoColor, 0.3f, false, false, true),
-            ("[DIAG] Scanning frequency band 4...", systemInfoColor, 0.6f, true, false, false),
-            ("[ALERT] Unknown signal type detected", bootColor, 0.2f, false, false, true),
-            ("[NET] Signal origin: Non-quantum network", statusColor, 0.2f, false, false, true),
-            ("[NET] Signal protocol: TCP/IP variant", systemInfoColor, 0.2f, false, false, true),
-            ("[LOG] Analyzing signal compatibility...", statusColor, 0.5f, true, false, false),
-            ("[NET] Protocol conversion module activated", systemInfoColor, 0.3f, false, false, true),
-            ("[NET] Signal strength: 67% - marginal", systemInfoColor, 0.2f, false, false, true),
-            ("[NET] Attempting enhanced signal acquisition", statusColor, 0.6f, true, false, false),
-            ("[NET] Connection established to unknown network", statusColor, 0.2f, false, false, true),
-            ("[ALERT] Signal strength increasing: 84%", systemInfoColor, 0.2f, false, false, true),
-            ("[DIAG] Running network diagnostics", systemInfoColor, 0.5f, true, false, false),
-            ("[NET] Found 1 potential connection", statusColor, 0.2f, false, false, true),
-            ("[NET] Network type: Local area connection", systemInfoColor, 0.2f, false, false, true),
-            ("[NET] Signal strength: Excellent (98%)", systemInfoColor, 0.2f, false, false, true),
-            ("[NET] Network scan complete", statusColor, 0.3f, false, false, true),
+            ("[NET] Signal detected - Unknown network type", bootColor, 0.2f, false, false, true),
+            ("[NET] Protocol: TCP/IP variant", systemInfoColor, 0.2f, false, false, true),
+            ("[NET] Signal strength marginal", systemInfoColor, 0.2f, false, false, true),
+            ("[NET] Attempting connection...", statusColor, 0.6f, true, false, false),
+            ("[NET] Connection established", statusColor, 0.2f, false, false, true),
             ("[DIAG] Detected endpoint device: Home computer system", systemInfoColor, 0.3f, false, false, true),
-            ("[DIAG] Last active: <3 mins ago", systemInfoColor, 0.2f, false, false, true),
             ("[ALERT] External system detected. Authentication required.", errorColor, 0.4f, false, false, true),
             ("[SYS] Ready to establish connection.", readyColor, 0.6f, false, false, false),
-            // Connection confirmation message will appear here - handled by the "Press ENTER to connect" prompt
-            // System info will appear after connection is confirmed
             ("[LOG] Timestamp: " + System.DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), systemInfoColor, 0f, false, false, true),
         };
 
@@ -824,7 +786,7 @@ public class NewGameAnimator : MonoBehaviour
 
                         if (barsToAdd > 0)
                         {
-                            string barSegment = new string('=', barsToAdd);
+                            string barSegment = new string('▉', barsToAdd);
                             consoleText.text += barSegment;
 
                             // Mark these segments as filled
@@ -892,7 +854,7 @@ public class NewGameAnimator : MonoBehaviour
                         if (totalElapsedTime >= targetTime && currentBars < barLength)
                         {
                             // Force completion if taking too long
-                            string remainingBars = new string('=', barLength - currentBars);
+                            string remainingBars = new string('▉', barLength - currentBars);
                             consoleText.text += remainingBars;
                             currentBars = barLength;
                         }
@@ -1260,7 +1222,21 @@ public class NewGameAnimator : MonoBehaviour
 
             // Stage 1: Subtle instability (small flicker) - keep text visible
             PlayRandomGlitchSound(0.3f);
-            AudioManager.SFX.Play("pink_noise_2", 0.5f);
+            AudioManager.SFX.Play("pink_noise_2", 0.7f);
+            
+            // Make the scanline overlay go absolutely insane during pink noise
+            if (shaderMaterial != null)
+            {
+                // Store current values
+                float currentGlitch = shaderMaterial.GetFloat("_GlitchIntensity");
+                float currentSpeed = shaderMaterial.GetFloat("_GlitchSpeed");
+                float currentCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
+                float currentCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
+                
+                // Go completely insane with the effects for 2 seconds
+                StartCoroutine(IntenseGlitchBurst(2.0f, currentGlitch * 10f, currentSpeed * 8f, 
+                                                 currentCurvatureX * 5f, currentCurvatureY * 5f));
+            }
 
             // First subtle shader adjustment
             shaderMaterial.SetFloat("_GlitchIntensity", originalGlitchIntensity * 1.3f); // Reduced from 1.5f for smoother progression
@@ -1352,7 +1328,21 @@ public class NewGameAnimator : MonoBehaviour
         // Initial glitch sound
         PlayRandomGlitchSound(0.6f);
 
-        AudioManager.SFX.Play("pink_noise_2", 0.8f);
+        AudioManager.SFX.Play("pink_noise_2", 1f);
+
+        // Make the scanline overlay go completely ballistic for the final shutdown
+        if (shaderMaterial != null)
+        {
+            // Store current values
+            float currentGlitch = shaderMaterial.GetFloat("_GlitchIntensity");
+            float currentSpeed = shaderMaterial.GetFloat("_GlitchSpeed");
+            float currentCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
+            float currentCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
+            
+            // Go absolutely ballistic with effects for 3 seconds - even more extreme
+            StartCoroutine(IntenseGlitchBurst(3.0f, currentGlitch * 15f, currentSpeed * 12f, 
+                                             currentCurvatureX * 8f, currentCurvatureY * 8f));
+        }
 
         // Let the sound play for a moment before effects start
         yield return new WaitForSeconds(0.15f); // Increased from 0.1f
@@ -2338,15 +2328,12 @@ public class NewGameAnimator : MonoBehaviour
         // Add extra spacing for readability
         yield return new WaitForSeconds(1.0f);
 
-        // Replace command prompt sequence with a more subtle, creative approach
-        // First, show a series of system diagnostics that hint at Purrine becoming aware
-
         // First show system accessing files
         DisplaySystemMessage("[SYS] Scanning user profile...", systemInfoColor);
         yield return new WaitForSeconds(0.8f);
 
         // Memory fragments - important message, give it space
-        DisplaySystemMessage("[MEM] Restoring personality fragments: 37%", systemInfoColor);
+        DisplaySystemMessage("[MEM] Restoring personality fragments...", systemInfoColor);
         yield return new WaitForSeconds(1.0f);
 
         // Add blank line for spacing
@@ -2382,12 +2369,12 @@ public class NewGameAnimator : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         // Another command, showing growing awareness
-        DisplayTerminalCommand("identify_user", initColor);
+        DisplayTerminalCommand("user_info", initColor);
         AudioManager.SFX.Play("bong_1", 0.2f);
         yield return new WaitForSeconds(0.7f);
 
         // System response
-        DisplaySystemMessage("User identified. Connection established.", systemInfoColor);
+        DisplaySystemMessage("Unable to fetch user data.", systemInfoColor);
         yield return new WaitForSeconds(0.9f);
 
         // Add blank line for spacing before important status command
@@ -2403,13 +2390,11 @@ public class NewGameAnimator : MonoBehaviour
         // Series of system readouts that show Purrine becoming aware
         string[] statusReadouts = new[] {
             "Core functions: Online",
-            "Memory systems: Online (Partial)",
-            "Behavioral matrix: Fragmented (63%)",
-            "Emotional framework: Active",
-            "Self-awareness module: Initializing...",
-            "Personality integration: In progress",
-            "User interface: Connecting...",
-            "Sensory systems: Limited access"
+            "Memory systems: UNSTABLE",
+            "Behavioral matrix: UNSTABLE",
+            "Emotions systems: ░▒▓▒░▓",
+            "User interface: ░▓▒▒░▒░░▓",
+            "Sensory systems: ░▒░▒▒░▓░░▓"
         };
 
         // Display status readouts with subtle typing effect
@@ -2559,7 +2544,7 @@ public class NewGameAnimator : MonoBehaviour
 
             if (barsToAdd > 0)
             {
-                string barSegment = new string('=', barsToAdd);
+                string barSegment = new string('▉', barsToAdd);
                 consoleText.text += barSegment;
 
                 // Mark these segments as filled
@@ -2627,7 +2612,7 @@ public class NewGameAnimator : MonoBehaviour
             if (totalElapsedTime >= targetTime && currentBars < barLength)
             {
                 // Force completion if taking too long
-                string remainingBars = new string('=', barLength - currentBars);
+                string remainingBars = new string('▉', barLength - currentBars);
                 consoleText.text += remainingBars;
                 currentBars = barLength;
             }
@@ -2664,5 +2649,111 @@ public class NewGameAnimator : MonoBehaviour
     private string GetLocalizedString(string key)
     {
         return LocalizationSettings.StringDatabase.GetLocalizedString("NewGameAnimatorStringCollection", key);
+    }
+    
+    // Method to create intense glitch bursts on the scanline overlay
+    private IEnumerator IntenseGlitchBurst(float duration, float targetGlitch, float targetSpeed, 
+                                          float targetCurvatureX, float targetCurvatureY)
+    {
+        if (shaderMaterial == null) yield break;
+        
+        // Store original values
+        float originalGlitch = shaderMaterial.GetFloat("_GlitchIntensity");
+        float originalSpeed = shaderMaterial.GetFloat("_GlitchSpeed");
+        float originalCurvatureX = shaderMaterial.GetFloat("_CurvatureX");
+        float originalCurvatureY = shaderMaterial.GetFloat("_CurvatureY");
+        
+        // Phase 1: Rapid ramp up to insane values (0.2 seconds)
+        float rampUpTime = 0.2f;
+        float elapsed = 0f;
+        
+        while (elapsed < rampUpTime)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / rampUpTime;
+            
+            // Exponential ease in for aggressive ramp
+            float easedT = t * t * t;
+            
+            shaderMaterial.SetFloat("_GlitchIntensity", Mathf.Lerp(originalGlitch, targetGlitch, easedT));
+            shaderMaterial.SetFloat("_GlitchSpeed", Mathf.Lerp(originalSpeed, targetSpeed, easedT));
+            shaderMaterial.SetFloat("_CurvatureX", Mathf.Lerp(originalCurvatureX, targetCurvatureX, easedT));
+            shaderMaterial.SetFloat("_CurvatureY", Mathf.Lerp(originalCurvatureY, targetCurvatureY, easedT));
+            
+            yield return null;
+        }
+        
+        // Phase 2: Stay at insane levels with random spikes (most of the duration)
+        float chaosTime = duration - rampUpTime - 0.5f; // Leave 0.5s for ramp down
+        elapsed = 0f;
+        
+        while (elapsed < chaosTime)
+        {
+            elapsed += Time.deltaTime;
+            
+            // Add random spikes and drops for extra chaos
+            float spikeMultiplier = Random.Range(0.8f, 1.4f);
+            float currentGlitch = targetGlitch * spikeMultiplier;
+            float currentSpeed = targetSpeed * Random.Range(0.5f, 2f);
+            
+            // Random curvature distortions
+            float curvatureNoise = Random.Range(-0.1f, 0.1f);
+            
+            shaderMaterial.SetFloat("_GlitchIntensity", currentGlitch);
+            shaderMaterial.SetFloat("_GlitchSpeed", currentSpeed);
+            shaderMaterial.SetFloat("_CurvatureX", targetCurvatureX + curvatureNoise);
+            shaderMaterial.SetFloat("_CurvatureY", targetCurvatureY + curvatureNoise);
+            
+            // Also mess with the scanline overlay color/alpha for extra visual chaos
+            if (scanlineOverlay != null)
+            {
+                Color currentColor = scanlineOverlay.color;
+                float randomAlpha = Random.Range(currentColor.a * 0.5f, currentColor.a * 1.5f);
+                scanlineOverlay.color = new Color(currentColor.r, currentColor.g, currentColor.b, 
+                                                 Mathf.Clamp01(randomAlpha));
+            }
+            
+            // Very short pause between chaos updates
+            yield return new WaitForSeconds(Random.Range(0.01f, 0.05f));
+        }
+        
+        // Phase 3: Ramp back down to original values (0.5 seconds)
+        float rampDownTime = 0.5f;
+        elapsed = 0f;
+        
+        // Get current values at start of ramp down
+        float currentGlitchStart = shaderMaterial.GetFloat("_GlitchIntensity");
+        float currentSpeedStart = shaderMaterial.GetFloat("_GlitchSpeed");
+        float currentCurvatureXStart = shaderMaterial.GetFloat("_CurvatureX");
+        float currentCurvatureYStart = shaderMaterial.GetFloat("_CurvatureY");
+        
+        while (elapsed < rampDownTime)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / rampDownTime;
+            
+            // Smooth ease out
+            float easedT = 1f - (1f - t) * (1f - t);
+            
+            shaderMaterial.SetFloat("_GlitchIntensity", Mathf.Lerp(currentGlitchStart, originalGlitch, easedT));
+            shaderMaterial.SetFloat("_GlitchSpeed", Mathf.Lerp(currentSpeedStart, originalSpeed, easedT));
+            shaderMaterial.SetFloat("_CurvatureX", Mathf.Lerp(currentCurvatureXStart, originalCurvatureX, easedT));
+            shaderMaterial.SetFloat("_CurvatureY", Mathf.Lerp(currentCurvatureYStart, originalCurvatureY, easedT));
+            
+            yield return null;
+        }
+        
+        // Ensure we end at exactly original values
+        shaderMaterial.SetFloat("_GlitchIntensity", originalGlitch);
+        shaderMaterial.SetFloat("_GlitchSpeed", originalSpeed);
+        shaderMaterial.SetFloat("_CurvatureX", originalCurvatureX);
+        shaderMaterial.SetFloat("_CurvatureY", originalCurvatureY);
+        
+        // Reset scanline overlay color if we messed with it
+        if (scanlineOverlay != null)
+        {
+            Color currentColor = scanlineOverlay.color;
+            scanlineOverlay.color = new Color(currentColor.r, currentColor.g, currentColor.b, 4f / 255f); // Reset to subtle alpha
+        }
     }
 }

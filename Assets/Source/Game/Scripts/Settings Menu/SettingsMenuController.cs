@@ -12,7 +12,7 @@ public class SettingsMenuController : MonoBehaviour
         settingsPanel.SetActive(true);
 
         // Play menu open sound
-        AudioManager.SFX.Play("menu_open_1", volume: 3.0f);
+        AudioManager.SFX.Play("menu_open_1", volume: 5.0f);
     }
 
     /// <summary>
@@ -23,6 +23,6 @@ public class SettingsMenuController : MonoBehaviour
         settingsPanel.SetActive(false);
 
         // Play menu close sound
-        AudioManager.SFX.Play("menu_close_1", volume: 3.0f);
+        AudioManager.SFX.Play("menu_close_1", volume: 5.0f);
     }
 }

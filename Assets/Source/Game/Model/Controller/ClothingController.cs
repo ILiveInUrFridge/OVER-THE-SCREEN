@@ -25,7 +25,7 @@ namespace Game.Model.Controller
         ///     and its associated <see cref="SpriteRenderer" />.
         /// </summary>
         [Header("Clothing Layers")]
-        public List<ClothingLayer> layers = new List<ClothingLayer>();
+        public List<ClothingLayer> layers = new();
 
         /// <summary>
         ///     An internal dictionary mapping each <see cref="ClothingType" /> to its <see cref="SpriteRenderer" />.
@@ -33,17 +33,17 @@ namespace Game.Model.Controller
         private Dictionary<ClothingType, SpriteRenderer> layerDictionary;
 
         [Header("Sprite Folders")]
-        private string topAFolder = "Game/Model/{spriteName}/Clothing/TopA";
-        private string topBFolder = "Game/Model/{spriteName}/Clothing/TopB";
-        private string bottomFolder = "Game/Model/{spriteName}/Clothing/Bottom";
-        private string braFolder = "Game/Model/{spriteName}/Clothing/Bra";
-        private string pantiesFolder = "Game/Model/{spriteName}/Clothing/Panties";
-        private string accessoryHairFolder = "Game/Model/{spriteName}/Clothing/Accessory/Hair";
-        private string accessoryHeadFolder = "Game/Model/{spriteName}/Clothing/Accessory/Head";
-        private string accessoryNeckFolder = "Game/Model/{spriteName}/Clothing/Accessory/Neck";
-        private string accessoryBreastsFolder = "Game/Model/{spriteName}/Clothing/Accessory/Breasts";
-        private string accessoryCrotchFolder = "Game/Model/{spriteName}/Clothing/Accessory/Crotch";
-        private string extraFolder = "Game/Model/{spriteName}/Clothing/Extra";
+        private readonly string topAFolder = "Game/Model/{spriteName}/Clothing/TopA";
+        private readonly string topBFolder = "Game/Model/{spriteName}/Clothing/TopB";
+        private readonly string bottomFolder = "Game/Model/{spriteName}/Clothing/Bottom";
+        private readonly string braFolder = "Game/Model/{spriteName}/Clothing/Bra";
+        private readonly string pantiesFolder = "Game/Model/{spriteName}/Clothing/Panties";
+        private readonly string accessoryHairFolder = "Game/Model/{spriteName}/Clothing/Accessory/Hair";
+        private readonly string accessoryHeadFolder = "Game/Model/{spriteName}/Clothing/Accessory/Head";
+        private readonly string accessoryNeckFolder = "Game/Model/{spriteName}/Clothing/Accessory/Neck";
+        private readonly string accessoryBreastsFolder = "Game/Model/{spriteName}/Clothing/Accessory/Breasts";
+        private readonly string accessoryCrotchFolder = "Game/Model/{spriteName}/Clothing/Accessory/Crotch";
+        private readonly string extraFolder = "Game/Model/{spriteName}/Clothing/Extra";
 
         /// <summary>
         ///     An internal dictionary mapping each Clothing Dictionary to its <see cref="ClothingType" />.

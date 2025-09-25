@@ -18,7 +18,7 @@ namespace Game.Model.Controller
         
         [Header("Blinking Configuration")]
         [SerializeField] private bool enableBlinking = true;
-        [SerializeField] private Vector2 blinkIntervalRange = new Vector2(3f, 4f); // range for random blink interval
+        [SerializeField] private Vector2 blinkIntervalRange = new(3f, 4f); // range for random blink interval
         [SerializeField] private float doubleBinkChance = 0.3f; // 30% chance for double blink
         
         [Header("Eye Emotion")]
@@ -27,7 +27,7 @@ namespace Game.Model.Controller
         private SpriteController spriteController;
         private Coroutine blinkCoroutine;
         private Coroutine blinkTimerCoroutine;
-        private Dictionary<EyeEmotion, List<Sprite>> emotionSprites = new Dictionary<EyeEmotion, List<Sprite>>();
+        private readonly Dictionary<EyeEmotion, List<Sprite>> emotionSprites = new();
         private bool isBlinking = false;
         private bool isManuallyClosed = false;
         
@@ -88,7 +88,7 @@ namespace Game.Model.Controller
             
             string basePath = $"Game/Model/{spriteName}/Facial/Eye/{emotionName}";
             
-            List<Sprite> sprites = new List<Sprite>();
+            List<Sprite> sprites = new();
             
             // Try to load each frame in the blink sequence
             foreach (int frameIndex in blinkFrameSequence)
@@ -119,6 +119,16 @@ namespace Game.Model.Controller
         {
             currentEmotion = emotion;
             
+            // If eyes are manually closed, keep them at the closed frame (index 0)
+            if (isManuallyClosed)
+            {
+                if (emotionSprites.ContainsKey(emotion) && emotionSprites[emotion].Count > 0)
+                {
+                    eyeRenderer.sprite = emotionSprites[emotion][0];
+                }
+                return;
+            }
+            
             if (emotionSprites.ContainsKey(emotion) && emotionSprites[emotion].Count > 0)
             {
                 // Set to the open eye frame (frame 100, which should be the last in sequence)
@@ -126,7 +136,7 @@ namespace Game.Model.Controller
                 if (sprites.Count > 1)
                 {
                     // Use the last sprite as the open eye (frame 100)
-                    eyeRenderer.sprite = sprites[sprites.Count - 1];
+                    eyeRenderer.sprite = sprites[^1];
                 }
                 else
                 {
@@ -210,7 +220,7 @@ namespace Game.Model.Controller
             }
             
             // Return to open eye (frame 100)
-            eyeRenderer.sprite = sprites[sprites.Count - 1];
+            eyeRenderer.sprite = sprites[^1];
             
             isBlinking = false;
         }
@@ -240,8 +250,8 @@ namespace Game.Model.Controller
             }
             
             // Brief pause at open eye
-            eyeRenderer.sprite = sprites[sprites.Count - 1];
-            yield return new WaitForSeconds(doubleBlinkFirstFrameTimes[doubleBlinkFirstFrameTimes.Length - 1]);
+            eyeRenderer.sprite = sprites[^1];
+            yield return new WaitForSeconds(doubleBlinkFirstFrameTimes[^1]);
             
             // Second blink (normal speed)
             for (int i = 0; i < sprites.Count - 1; i++)
@@ -251,7 +261,7 @@ namespace Game.Model.Controller
             }
             
             // Return to open eye (frame 100)
-            eyeRenderer.sprite = sprites[sprites.Count - 1];
+            eyeRenderer.sprite = sprites[^1];
             
             isBlinking = false;
         }

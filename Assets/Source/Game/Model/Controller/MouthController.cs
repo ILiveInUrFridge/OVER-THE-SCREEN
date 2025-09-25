@@ -15,14 +15,14 @@ namespace Game.Model.Controller
         public SpriteRenderer mouthRenderer;
         
         [Header("Talking Configuration")]
-        [SerializeField] private float frameDuration = 0.11f; // 110 milliseconds
+        [SerializeField] private float frameDuration = 0.09f;
         
         [Header("Mouth Emotion")]
         [SerializeField] private MouthEmotion currentEmotion = MouthEmotion.NEUTRAL;
 
         private SpriteController spriteController;
         private Coroutine talkCoroutine;
-        private Dictionary<MouthEmotion, Dictionary<string, Sprite>> emotionSprites = new Dictionary<MouthEmotion, Dictionary<string, Sprite>>();
+        private readonly Dictionary<MouthEmotion, Dictionary<string, Sprite>> emotionSprites = new();
         private bool isTalking = false;
         
         // Talking frame names
@@ -67,7 +67,7 @@ namespace Game.Model.Controller
             
             string basePath = $"Game/Model/{spriteName}/Facial/Mouth/{emotionName}";
             
-            Dictionary<string, Sprite> sprites = new Dictionary<string, Sprite>();
+            Dictionary<string, Sprite> sprites = new();
             
             // Try to load each talking frame
             foreach (string frameName in talkingFrames)
