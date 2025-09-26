@@ -1,0 +1,11 @@
+namespace OTS.Model.Controller.Data
+{
+    /// <summary>
+    ///     Enum for different sprite types in the game.
+    /// </summary>
+    public enum SpriteType
+    {
+        A,
+        B
+    }
+} 
