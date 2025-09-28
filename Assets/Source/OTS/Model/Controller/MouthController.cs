@@ -183,21 +183,41 @@ namespace OTS.Model.Controller
             }
             
             string lastFrame = "";
+            int consecutiveNonClosedFrames = 0;
             
             while (isTalking)
             {
                 // Get a random frame that's different from the last one
                 List<string> frameOptions = availableFrames.Where(f => f != lastFrame).ToList();
-                
+
+                // If we haven't had at least 2 consecutive non-"Closed" frames, exclude "Closed" from options
+                if (consecutiveNonClosedFrames < 2 && frameOptions.Contains("Closed"))
+                {
+                    frameOptions = frameOptions.Where(f => f != "Closed").ToList();
+                }
+
                 if (frameOptions.Count == 0)
                 {
-                    frameOptions = availableFrames; // Fallback if somehow we have no options
+                    frameOptions = availableFrames.Where(f => f != lastFrame).ToList(); // Fallback
+                    if (frameOptions.Count == 0)
+                    {
+                        frameOptions = availableFrames; // Ultimate fallback
+                    }
+                }
+
+                string randomFrame = frameOptions[Random.Range(0, frameOptions.Count)];
+
+                mouthRenderer.sprite = sprites[randomFrame];
+                
+                // Track consecutive non-"Closed" frames
+                if (randomFrame != "Closed") {
+                    consecutiveNonClosedFrames++;
+                } else {
+                    consecutiveNonClosedFrames = 0; // Reset counter when "Closed" is displayed
                 }
                 
-                string randomFrame = frameOptions[Random.Range(0, frameOptions.Count)];
-                mouthRenderer.sprite = sprites[randomFrame];
                 lastFrame = randomFrame;
-                
+
                 yield return new WaitForSeconds(frameDuration);
             }
         }
