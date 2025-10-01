@@ -5,13 +5,14 @@ using OTS.Core;
 using OTS.Common;
 using OTS.Characters;
 using OTS.Items;
+using OTS.Scripts.Environment;
 
 namespace OTS
 {
     /// <summary>
     ///     Manages the overall game state and session
     /// </summary>
-    public class GameManager : MonoBehaviour
+    public class GameManager : MonoBehaviour, ILoggable
     {
         public static GameManager Instance { get; private set; }
         
@@ -92,7 +93,7 @@ namespace OTS
 
             currentSession = new Session(saveSlot, gameInfo);
 
-            Debug.Log("New game started");
+            this.Log("New game started");
 
             // Set up initial game state
             InitialGameSetup();
@@ -115,12 +116,12 @@ namespace OTS
             
             if (loadedSession == null)
             {
-                Debug.LogWarning($"Failed to load game from slot {saveSlot}");
+                this.LogWarning($"Failed to load game from slot {saveSlot}");
                 return false;
             }
             
             currentSession = loadedSession;
-            Debug.Log($"Game loaded from slot {saveSlot}");
+            this.Log($"Game loaded from slot {saveSlot}");
             return true;
         }
         
@@ -135,18 +136,18 @@ namespace OTS
         {
             if (currentSession == null)
             {
-                Debug.LogWarning("Cannot save: No active game session");
+                this.LogWarning("Cannot save: No active game session");
                 return false;
             }
             
             if (!currentSession.SaveSlot.HasValue)
             {
-                Debug.LogWarning("Cannot save: Session has no save slot");
+                this.LogWarning("Cannot save: Session has no save slot");
                 return false;
             }
             
             currentSession.Save();
-            Debug.Log($"Game saved to slot {currentSession.SaveSlot.Value}");
+            this.Log($"Game saved to slot {currentSession.SaveSlot.Value}");
             return true;
         }
         
@@ -156,7 +157,7 @@ namespace OTS
         public void EndGame()
         {
             currentSession = null;
-            Debug.Log("Game ended");
+            this.Log("Game ended");
         }
         
         /// <summary>
@@ -196,7 +197,53 @@ namespace OTS
             // Update mood based on stats
             purrine.UpdateMood();
             
-            Debug.Log($"Day {gameInfo.CurrentDay} began. Purrine's mood: {purrine.MoodName}");
+            // Notify environment system of new day
+            if (TimeOfDayManager.Instance != null)
+            {
+                TimeOfDayManager.Instance.StartNewDay(gameInfo.CurrentDay);
+            }
+            
+            this.Log($"Day {gameInfo.CurrentDay} began. Purrine's mood: {purrine.MoodName}");
+        }
+        
+        /// <summary>
+        ///     Advance the time of day (Morning -> Afternoon -> Night)
+        /// </summary>
+        public void AdvanceTimeOfDay()
+        {
+            if (TimeOfDayManager.Instance != null)
+            {
+                TimeOfDayManager.Instance.AdvanceTime();
+            }
+            else
+            {
+                this.LogWarning("TimeOfDayManager not found! Cannot advance time.");
+            }
+        }
+        
+        /// <summary>
+        ///     Set the time of day directly
+        /// </summary>
+        /// <param name="timeOfDay">The time to set</param>
+        public void SetTimeOfDay(TimeOfDay timeOfDay)
+        {
+            if (TimeOfDayManager.Instance != null)
+            {
+                TimeOfDayManager.Instance.SetTimeOfDay(timeOfDay);
+            }
+            else
+            {
+                this.LogWarning("TimeOfDayManager not found! Cannot set time.");
+            }
+        }
+        
+        /// <summary>
+        ///     Get the current time of day
+        /// </summary>
+        /// <returns>The current time of day, or Morning if TimeOfDayManager is not available</returns>
+        public TimeOfDay GetCurrentTimeOfDay()
+        {
+            return TimeOfDayManager.Instance?.CurrentTimeOfDay ?? TimeOfDay.Morning;
         }
     }
 } 

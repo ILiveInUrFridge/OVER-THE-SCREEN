@@ -84,4 +84,82 @@ namespace OTS.Common
             _ => throw new ArgumentOutOfRangeException(nameof(gpu))
         };
     }
+
+    /// <summary>
+    ///     Represents different times of day within a single game day
+    /// </summary>
+    public enum TimeOfDay
+    {
+        Morning,    // Start of each day
+        Afternoon,  // Mid-day
+        Night       // End of day (before progressing to next day)
+    }
+
+    /// <summary>
+    ///     Extensions for the TimeOfDay enum
+    /// </summary>
+    public static class TimeOfDayExtensions
+    {
+        public static string GetName(this TimeOfDay timeOfDay) => timeOfDay switch
+        {
+            TimeOfDay.Morning => "Morning",
+            TimeOfDay.Afternoon => "Afternoon", 
+            TimeOfDay.Night => "Night",
+            _ => throw new ArgumentOutOfRangeException(nameof(timeOfDay))
+        };
+
+        public static TimeOfDay GetNext(this TimeOfDay timeOfDay) => timeOfDay switch
+        {
+            TimeOfDay.Morning => TimeOfDay.Afternoon,
+            TimeOfDay.Afternoon => TimeOfDay.Night,
+            TimeOfDay.Night => TimeOfDay.Morning,
+            _ => throw new ArgumentOutOfRangeException(nameof(timeOfDay))
+        };
+
+    }
+
+
+    /// <summary>
+    ///     Represents different environment layer types
+    /// </summary>
+    public enum EnvironmentLayerType
+    {
+        // Core layers (always present)
+        Background,
+        NoiseOverlay,
+
+        // Post-processing layers (modular)
+        Vignette,
+        Filter,
+        CharacterLighting,
+
+        // Meta layers for custom ordering
+        MetaBeforeBackground,
+        BackgroundPostProcess,
+        MetaAfterBackground,
+        MetaAbovePostProcess,
+        PostProcessingAboveEverything
+    }
+
+    /// <summary>
+    ///     Extensions for the EnvironmentLayerType enum
+    /// </summary>
+    public static class EnvironmentLayerTypeExtensions
+    {
+        public static string GetName(this EnvironmentLayerType layerType) => layerType switch
+        {
+            EnvironmentLayerType.Background => "Background",
+            EnvironmentLayerType.NoiseOverlay => "Noise Overlay",
+            EnvironmentLayerType.Vignette => "Vignette",
+            EnvironmentLayerType.Filter => "Filter",
+            EnvironmentLayerType.CharacterLighting => "Character Lighting",
+            EnvironmentLayerType.MetaBeforeBackground => "Meta Before Background",
+            EnvironmentLayerType.BackgroundPostProcess => "Background Post Process",
+            EnvironmentLayerType.MetaAfterBackground => "Meta After Background",
+            EnvironmentLayerType.MetaAbovePostProcess => "Meta Above Post Process",
+            EnvironmentLayerType.PostProcessingAboveEverything => "Post Processing Above Everything",
+            _ => throw new ArgumentOutOfRangeException(nameof(layerType))
+        };
+
+    }
 } 

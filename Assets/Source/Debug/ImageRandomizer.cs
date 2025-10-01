@@ -5,7 +5,7 @@ using System.Collections.Generic;
 ///     Randomly changes the sprite, without repeating the same sprite twice in a row.
 ///     Usually used to test mouth animations.
 /// </summary>
-public class ImageRandomizer : MonoBehaviour
+public class ImageRandomizer : MonoBehaviour, ILoggable
 {
     public List<Sprite> sprites;
     public float intervalMilliseconds = 110; // Time between changes
@@ -17,7 +17,7 @@ public class ImageRandomizer : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (sprites == null || sprites.Count == 0)
         {
-            Debug.LogError("No sprites assigned!");
+            this.LogError("No sprites assigned!");
             enabled = false;
             return;
         }

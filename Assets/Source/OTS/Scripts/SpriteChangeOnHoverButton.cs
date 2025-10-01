@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using System.Collections;
 
-public class SpriteChangeOnHoverButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class SpriteChangeOnHoverButton : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, ILoggable
 {
     [Header("Sprite Settings")]
     [Tooltip("The sprite to show when hovering")]
@@ -20,7 +20,7 @@ public class SpriteChangeOnHoverButton : MonoBehaviour, IPointerEnterHandler, IP
     {
         if (hoverSprite == null)
         {
-            Debug.LogError("Hover sprite is not assigned!", this);
+            this.LogError("Hover sprite is not assigned!");
             return;
         }
 
