@@ -40,16 +40,14 @@ public class FixGameWindowScaleBug
         {
             return;
         }
-  
-        var defScaleField = gameViewType.GetField("m_defaultScale", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-  
-        //whatever scale you want when you click on play
+        
+        // whatever scale you want when you click on play
         float defaultScale = 0.1f;
   
-        var areaField = gameViewType.GetField("m_ZoomArea", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var areaField = gameViewType.GetField("m_ZoomArea", BindingFlags.Instance | BindingFlags.NonPublic);
         var areaObj = areaField.GetValue(gameViewWindow);
   
-        var scaleField = areaObj.GetType().GetField("m_Scale", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+        var scaleField = areaObj.GetType().GetField("m_Scale", BindingFlags.Instance | BindingFlags.NonPublic);
         scaleField.SetValue(areaObj, new Vector2(defaultScale, defaultScale));
     }
   

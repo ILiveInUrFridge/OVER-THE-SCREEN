@@ -1,5 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using OTS.Common;
@@ -37,7 +38,8 @@ namespace OTS.Scripts.Environment
         // Current state
         private TimeOfDay currentTime = TimeOfDay.Morning;
         private Sequence currentTransition;
-        private Dictionary<SpriteRenderer, float> originalAlphas = new Dictionary<SpriteRenderer, float>();
+		private Dictionary<SpriteRenderer, float> originalAlphas = new Dictionary<SpriteRenderer, float>();
+		private Dictionary<Image, float> originalImageAlphas = new Dictionary<Image, float>();
 
         void Awake()
         {
@@ -53,28 +55,41 @@ namespace OTS.Scripts.Environment
         /// </summary>
         void StoreOriginalAlphas()
         {
-            originalAlphas.Clear();
+			originalAlphas.Clear();
+			originalImageAlphas.Clear();
 
-            // Store default variant alphas from the sprite renderer
+			// Store default variant alphas from the sprite renderer
             if (defaultVariant != null)
             {
-                var renderers = defaultVariant.GetComponentsInChildren<SpriteRenderer>(true);
-                foreach (var renderer in renderers)
-                {
-                    originalAlphas[renderer] = renderer.color.a;
-                }
+				var renderers = defaultVariant.GetComponentsInChildren<SpriteRenderer>(true);
+				foreach (var renderer in renderers)
+				{
+					originalAlphas[renderer] = renderer.color.a;
+				}
+
+				var images = defaultVariant.GetComponentsInChildren<Image>(true);
+				foreach (var img in images)
+				{
+					originalImageAlphas[img] = img.color.a;
+				}
             }
 
-            // Store time variant alphas from the sprite renderer
+			// Store time variant alphas from the sprite renderer
             foreach (var variant in timeVariants)
             {
                 if (variant?.variantObject != null)
                 {
-                    var renderers = variant.variantObject.GetComponentsInChildren<SpriteRenderer>(true);
-                    foreach (var renderer in renderers)
-                    {
-                        originalAlphas[renderer] = renderer.color.a;
-                    }
+					var renderers = variant.variantObject.GetComponentsInChildren<SpriteRenderer>(true);
+					foreach (var renderer in renderers)
+					{
+						originalAlphas[renderer] = renderer.color.a;
+					}
+
+					var images = variant.variantObject.GetComponentsInChildren<Image>(true);
+					foreach (var img in images)
+					{
+						originalImageAlphas[img] = img.color.a;
+					}
                 }
             }
         }
@@ -209,13 +224,21 @@ namespace OTS.Scripts.Environment
             foreach (var variant in activeVariants)
             {
                 variant.SetActive(true);
-                foreach (var r in variant.GetComponentsInChildren<SpriteRenderer>(true))
-                {
-                    var c = r.color;
-                    c.a = GetOriginalAlpha(r);
-                    r.color = c;
-                    DOTween.Kill(r); // make sure nothing is attached
-                }
+				foreach (var r in variant.GetComponentsInChildren<SpriteRenderer>(true))
+				{
+					var c = r.color;
+					c.a = GetOriginalAlpha(r);
+					r.color = c;
+					DOTween.Kill(r); // make sure nothing is attached
+				}
+
+				foreach (var img in variant.GetComponentsInChildren<Image>(true))
+				{
+					var c = img.color;
+					c.a = GetOriginalAlpha(img);
+					img.color = c;
+					DOTween.Kill(img);
+				}
             }
 
             if (enableDebugLogs) this.Log($"Set to {time} instantly");
@@ -260,6 +283,16 @@ namespace OTS.Scripts.Environment
 
                 currentTransition.Join(r.DOFade(0f, transitionDuration).SetEase(transitionEase));
             }
+
+			var images = variant.GetComponentsInChildren<Image>(true);
+			foreach (var img in images)
+			{
+				float original = GetOriginalAlpha(img);
+				DOTween.Kill(img);
+				var c = img.color; c.a = original; img.color = c;
+
+				currentTransition.Join(img.DOFade(0f, transitionDuration).SetEase(transitionEase));
+			}
         }
 
         /// <summary>
@@ -279,11 +312,23 @@ namespace OTS.Scripts.Environment
 
                 currentTransition.Join(r.DOFade(target, transitionDuration).SetEase(transitionEase));
             }
+
+			var images = variant.GetComponentsInChildren<Image>(true);
+			foreach (var img in images)
+			{
+				float target = GetOriginalAlpha(img);
+
+				DOTween.Kill(img);
+				var c = img.color; c.a = 0f; img.color = c; // force start at 0
+
+				currentTransition.Join(img.DOFade(target, transitionDuration).SetEase(transitionEase));
+			}
         }
 
         /// <summary>
         ///     Helper to fetch the original alpha for a sprite renderer
         /// </summary>
-        float GetOriginalAlpha(SpriteRenderer r) => originalAlphas.TryGetValue(r, out var a) ? a : 1f;
+		float GetOriginalAlpha(SpriteRenderer r) => originalAlphas.TryGetValue(r, out var a) ? a : 1f;
+		float GetOriginalAlpha(Image img) => originalImageAlphas.TryGetValue(img, out var a) ? a : 1f;
     }
 }
