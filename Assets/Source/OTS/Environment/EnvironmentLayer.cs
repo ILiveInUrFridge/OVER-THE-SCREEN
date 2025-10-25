@@ -326,7 +326,7 @@ namespace OTS.Scripts.Environment
         }
 
         /// <summary>
-        ///     Helper to fetch the original alpha for a sprite renderer
+        ///     Helpers to fetch the original alpha for a sprite renderer and image
         /// </summary>
 		float GetOriginalAlpha(SpriteRenderer r) => originalAlphas.TryGetValue(r, out var a) ? a : 1f;
 		float GetOriginalAlpha(Image img) => originalImageAlphas.TryGetValue(img, out var a) ? a : 1f;
